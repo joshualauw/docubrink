@@ -1,0 +1,128 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum SubscriptionStatus {
+    ACTIVE
+    CANCELED
+    EXPIRED
+}
+
+enum AuthProvider {
+    LOCAL
+    GOOGLE
+}
+
+enum Role {
+    ADMIN
+    ORGANIZER
+}
+
+enum SourceType {
+    UPLOAD
+    URL
+    MANUAL
+}
+
+enum SourceStatus {
+    PROCESSING
+    FAILED
+    DONE
+}
+
+model Plan {
+    planId       Int    @id @default(autoincrement())
+    name         String
+    apiCallLimit Int
+    aiTokenLimit Int
+    userLimit    Int
+
+    subscriptions Subscription[]
+}
+
+model Subscription {
+    subscriptionId       Int                @id @default(autoincrement())
+    organizationId       Int
+    planId               Int
+    status               SubscriptionStatus
+    startDate            DateTime
+    endDate              DateTime
+    renewalDate          DateTime?
+    canceledDate         DateTime?
+    stripeCustomerId     String
+    stripeSubscriptionId String
+
+    plan         Plan         @relation(fields: [planId], references: [planId])
+    organization Organization @relation(fields: [organizationId], references: [organizationId])
+}
+
+model User {
+    userId           Int           @id @default(autoincrement())
+    organizationId   Int
+    role             Role
+    username         String        @unique
+    email            String        @unique
+    password         String
+    profileUrl       String?
+    authProviderName AuthProvider?
+    authProviderId   String?
+
+    organization Organization @relation(fields: [organizationId], references: [organizationId])
+}
+
+model Organization {
+    organizationId Int     @id @default(autoincrement())
+    name           String
+    description    String?
+
+    users         User[]
+    subscriptions Subscription[]
+    sources       Source[]
+    aiQueries     AiQuery[]
+    apiKeys       ApiKey[]
+}
+
+model Source {
+    sourceId       Int          @id @default(autoincrement())
+    organizationId Int
+    title          String
+    type           SourceType
+    status         SourceStatus
+
+    organization Organization  @relation(fields: [organizationId], references: [organizationId])
+    sourceChunks SourceChunk[]
+}
+
+model SourceChunk {
+    sourceChunkId Int                   @id @default(autoincrement())
+    sourceId      Int
+    chunkText     String
+    embedding     Unsupported("vector")
+
+    source Source @relation(fields: [sourceId], references: [sourceId])
+}
+
+model AiQuery {
+    aiQueryId      Int    @id @default(autoincrement())
+    organizationId Int
+    queryText      String
+    responseText   String
+    tokensUsed     Int
+
+    organization Organization @relation(fields: [organizationId], references: [organizationId])
+}
+
+model ApiKey {
+    apiKeyId       Int      @id @default(autoincrement())
+    organizationId Int
+    keyHash        String   @unique
+    scopes         String[]
+    isActive       Boolean
+
+    organization Organization @relation(fields: [organizationId], references: [organizationId])
+}

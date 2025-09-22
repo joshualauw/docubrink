@@ -1,0 +1,38 @@
+import { Inject, Injectable } from "@nestjs/common";
+import { ConfigType } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
+import { AuthToken, GetAuthTokenDto } from "src/modules/auth/dtos/AuthToken";
+import jwtConfig from "src/config/jwt.config";
+import * as bcrypt from "bcrypt";
+
+@Injectable()
+export class TokenService {
+    constructor(
+        private jwt: JwtService,
+        @Inject(jwtConfig.KEY) private jwtCfg: ConfigType<typeof jwtConfig>,
+    ) {}
+
+    generateToken(payload: GetAuthTokenDto): AuthToken {
+        const accessToken = this.jwt.sign({
+            sub: payload.userId.toString(),
+            id: payload.userId,
+            email: payload.email,
+            username: payload.username,
+        });
+
+        return {
+            accessToken,
+            refreshToken: accessToken, //TODO: implement refresh token
+            expiresIn: this.jwtCfg.expiresIn,
+            type: "Bearer",
+        };
+    }
+
+    async hashPassword(password: string): Promise<string> {
+        return await bcrypt.hash(password, 10);
+    }
+
+    async comparePassword(password: string, realPassword: string): Promise<boolean> {
+        return await bcrypt.compare(password, realPassword);
+    }
+}
