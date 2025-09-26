@@ -4,6 +4,7 @@ import { ConfigModule, ConfigType } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { PrismaModule } from "nestjs-prisma";
 import commonConfig from "src/config/common.config";
+import cryptoConfig from "src/config/crypto.config";
 import jwtConfig from "src/config/jwt.config";
 import openaiConfig from "src/config/openai.config";
 import redisConfig from "src/config/redis.config";
@@ -16,7 +17,7 @@ import { WebhookModule } from "src/modules/webhook/webhook.module";
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            load: [commonConfig, stripeConfig, jwtConfig, redisConfig, openaiConfig],
+            load: [commonConfig, stripeConfig, jwtConfig, redisConfig, openaiConfig, cryptoConfig],
         }),
         PrismaModule.forRoot({
             isGlobal: true,
@@ -42,4 +43,4 @@ import { WebhookModule } from "src/modules/webhook/webhook.module";
         },
     ],
 })
-export class AppModule { }
+export class AppModule {}

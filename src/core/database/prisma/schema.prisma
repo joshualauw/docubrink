@@ -56,6 +56,8 @@ model Subscription {
     canceledDate         DateTime?
     stripeCustomerId     String
     stripeSubscriptionId String
+    createdAt            DateTime           @default(now())
+    updatedAt            DateTime           @updatedAt()
 
     plan         Plan         @relation(fields: [planId], references: [planId])
     organization Organization @relation(fields: [organizationId], references: [organizationId])
@@ -63,28 +65,42 @@ model Subscription {
 
 model User {
     userId           Int           @id @default(autoincrement())
-    organizationId   Int
-    role             Role
     username         String        @unique
     email            String        @unique
     password         String
     profileUrl       String?
     authProviderName AuthProvider?
     authProviderId   String?
+    createdAt        DateTime      @default(now())
+    updatedAt        DateTime      @updatedAt()
+
+    organizationUser OrganizationUser[]
+}
+
+model OrganizationUser {
+    organizationUserId Int      @id @default(autoincrement())
+    organizationId     Int
+    userId             Int
+    role               Role
+    createdAt          DateTime @default(now())
+    updatedAt          DateTime @updatedAt()
 
     organization Organization @relation(fields: [organizationId], references: [organizationId])
+    user         User         @relation(fields: [userId], references: [userId])
 }
 
 model Organization {
-    organizationId Int     @id @default(autoincrement())
+    organizationId Int      @id @default(autoincrement())
     name           String
     description    String?
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt()
 
-    users         User[]
-    subscriptions Subscription[]
-    sources       Source[]
-    aiQueries     AiQuery[]
-    apiKeys       ApiKey[]
+    subscriptions    Subscription[]
+    sources          Source[]
+    aiQueries        AiQuery[]
+    apiKeys          ApiKey[]
+    organizationUser OrganizationUser[]
 }
 
 model Source {
@@ -93,6 +109,8 @@ model Source {
     title          String
     type           SourceType
     status         SourceStatus
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt()
 
     organization Organization  @relation(fields: [organizationId], references: [organizationId])
     sourceChunks SourceChunk[]
@@ -103,16 +121,20 @@ model SourceChunk {
     sourceId      Int
     chunkText     String
     embedding     Unsupported("vector")
+    createdAt     DateTime              @default(now())
+    updatedAt     DateTime              @updatedAt()
 
     source Source @relation(fields: [sourceId], references: [sourceId])
 }
 
 model AiQuery {
-    aiQueryId      Int    @id @default(autoincrement())
+    aiQueryId      Int      @id @default(autoincrement())
     organizationId Int
     queryText      String
     responseText   String
     tokensUsed     Int
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt()
 
     organization Organization @relation(fields: [organizationId], references: [organizationId])
 }
@@ -123,6 +145,8 @@ model ApiKey {
     keyHash        String   @unique
     scopes         String[]
     isActive       Boolean
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt()
 
     organization Organization @relation(fields: [organizationId], references: [organizationId])
 }
