@@ -14,7 +14,7 @@ export class TokenService {
     generateToken(payload: GetAuthTokenDto): AuthToken {
         const accessToken = this.jwt.sign({
             sub: payload.userId.toString(),
-            id: payload.userId,
+            userId: payload.userId,
             email: payload.email,
             username: payload.username,
         });

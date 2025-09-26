@@ -11,6 +11,7 @@ import redisConfig from "src/config/redis.config";
 import stripeConfig from "src/config/stripe.config";
 import { AuthModule } from "src/modules/auth/auth.module";
 import { JwtAuthGuard } from "src/modules/auth/guards/jwt.guard";
+import { OrganizationModule } from "src/modules/organization/organization.module";
 import { WebhookModule } from "src/modules/webhook/webhook.module";
 
 @Module({
@@ -34,6 +35,7 @@ import { WebhookModule } from "src/modules/webhook/webhook.module";
             inject: [redisConfig.KEY],
         }),
         AuthModule,
+        OrganizationModule,
         WebhookModule,
     ],
     providers: [
