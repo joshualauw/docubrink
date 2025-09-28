@@ -21,7 +21,7 @@ enum AuthProvider {
 
 enum Role {
     ADMIN
-    ORGANIZER
+    MEMBER
 }
 
 enum SourceType {
@@ -42,7 +42,6 @@ model Plan {
     name          String
     apiCallLimit  Int
     aiTokenLimit  Int
-    userLimit     Int
     stripePriceId String
 
     subscriptions Subscription[]
@@ -147,6 +146,7 @@ model AiQuery {
 model ApiKey {
     apiKeyId       Int      @id @default(autoincrement())
     organizationId Int
+    name           String
     keyHash        String   @unique
     scopes         String[]
     isActive       Boolean
