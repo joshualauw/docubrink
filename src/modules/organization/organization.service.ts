@@ -106,6 +106,7 @@ export class OrganizationService {
             where: { apiKeyId: payload.apiKeyId },
             data: {
                 name: payload.name,
+                isActive: payload.isActive,
                 scopes: payload.scopes,
             },
         });

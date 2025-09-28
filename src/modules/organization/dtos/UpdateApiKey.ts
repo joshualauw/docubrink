@@ -1,10 +1,11 @@
 import { ApiKey } from "@prisma/client";
-import { AllowedScope, OrgScope } from "src/types/OrgScope";
+import { AllowedScope } from "src/types/OrgScope";
 import * as z from "zod";
 
 export const updateApiKeyBody = z.object({
-    name: z.string(),
+    name: z.string().min(1, "name is required"),
     scopes: z.array(AllowedScope).min(1, "scopes is required"),
+    isActive: z.boolean({ message: "isActive is required" }),
 });
 
 export type UpdateApiKeyBody = z.infer<typeof updateApiKeyBody>;
