@@ -4,7 +4,7 @@ import * as z from "zod";
 export const registerBody = z
     .object({
         username: z.string().min(1, "username is required"),
-        email: z.string().min(1, "email is required"),
+        email: z.string().min(1, "email is required").email({ message: "email must be a valid email" }),
         password: z.string().min(3, "password minimum is 3 characters"),
         passwordConfirm: z.string().min(3, "password minimum is 3 characters"),
     })
