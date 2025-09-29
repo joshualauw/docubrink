@@ -5,6 +5,8 @@ import { PrismaService } from "nestjs-prisma";
 import { CreateSourceDto, CreateSourceResponse } from "src/modules/source/dtos/CreateSource";
 import { QueueKey } from "src/types/QueueKey";
 import dayjs from "dayjs";
+import { UpdateSourceDto, UpdateSourceResponse } from "src/modules/source/dtos/UpdateSource";
+import { DeleteSourceDto, DeleteSourceResponse } from "src/modules/source/dtos/DeleteSource";
 
 @Injectable()
 export class SourceService {
@@ -76,5 +78,22 @@ export class SourceService {
         });
 
         return { sourceId: source.sourceId, createdAt: source.createdAt.toISOString() };
+    }
+
+    async update(payload: UpdateSourceDto): Promise<UpdateSourceResponse> {
+        const source = await this.prismaService.source.update({
+            where: { sourceId: payload.sourceId },
+            data: { title: payload.title },
+        });
+
+        return { sourceId: source.sourceId, updatedAt: source.updatedAt.toISOString() };
+    }
+
+    async delete(payload: DeleteSourceDto): Promise<DeleteSourceResponse> {
+        const source = await this.prismaService.source.delete({
+            where: { sourceId: payload.sourceId },
+        });
+
+        return { sourceId: source.sourceId, deletedAt: dayjs().toISOString() };
     }
 }

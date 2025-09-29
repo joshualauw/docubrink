@@ -22,17 +22,17 @@ export class OrganizationController {
         return apiResponse("create organization successful", res);
     }
 
-    @Post("/:id/api-key")
+    @Post("/:organizationId/api-key")
     @OrganizationRoles("ADMIN")
     @UseGuards(OrganizationRolesGuard)
     @UsePipes(new ZodValidationPipe(createApiKeyBody))
-    async createApiKey(@Param("id", ParseIntPipe) id: number, @Body() body: CreateApiKeyBody) {
-        const res = await this.organizationService.createApiKey({ ...body, organizationId: id });
+    async createApiKey(@Param("organizationId", ParseIntPipe) organizationId: number, @Body() body: CreateApiKeyBody) {
+        const res = await this.organizationService.createApiKey({ ...body, organizationId });
 
         return apiResponse("create api key successful", res);
     }
 
-    @Put("/:id/api-key/:apiKeyId")
+    @Put("/:organizationId/api-key/:apiKeyId")
     @OrganizationRoles("ADMIN")
     @UseGuards(OrganizationRolesGuard)
     @UsePipes(new ZodValidationPipe(updateApiKeyBody))
@@ -42,7 +42,7 @@ export class OrganizationController {
         return apiResponse("update api key successful", res);
     }
 
-    @Delete("/:id/api-key/:apiKeyId")
+    @Delete("/:organizationId/api-key/:apiKeyId")
     @OrganizationRoles("ADMIN")
     @UseGuards(OrganizationRolesGuard)
     async deleteApiKey(@Param("apiKeyId", ParseIntPipe) apiKeyId: number) {

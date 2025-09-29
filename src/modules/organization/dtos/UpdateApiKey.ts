@@ -10,9 +10,7 @@ export const updateApiKeyBody = z.object({
 
 export type UpdateApiKeyBody = z.infer<typeof updateApiKeyBody>;
 
-export type UpdateApiKeyDto = UpdateApiKeyBody & {
-    apiKeyId: number;
-};
+export type UpdateApiKeyDto = UpdateApiKeyBody & Pick<ApiKey, "apiKeyId">;
 
 export type UpdateApiKeyResponse = Pick<ApiKey, "apiKeyId"> & {
     updatedAt: string;

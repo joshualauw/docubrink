@@ -131,7 +131,7 @@ model SourceChunk {
     embedding     Unsupported("vector")
     createdAt     DateTime              @default(now())
 
-    source Source @relation(fields: [sourceId], references: [sourceId])
+    source Source @relation(fields: [sourceId], references: [sourceId], onDelete: Cascade)
 }
 
 model AiEmbedding {

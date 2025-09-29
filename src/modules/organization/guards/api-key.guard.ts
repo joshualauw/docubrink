@@ -18,7 +18,7 @@ export class ApiKeyGuard implements CanActivate {
         const key = request.headers["x-api-key"] as string;
         if (!key) throw new BadRequestException("API Key is not provided");
 
-        const organizationId = parseInt(request.params.id);
+        const organizationId = parseInt(request.params.organizationId);
         if (!organizationId) throw new BadRequestException("organization id not provided");
 
         const apiKeys = await this.prismaService.apiKey.findMany({

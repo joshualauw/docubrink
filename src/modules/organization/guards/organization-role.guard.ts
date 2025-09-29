@@ -22,7 +22,7 @@ export class OrganizationRolesGuard implements CanActivate {
         const request = ctx.switchToHttp().getRequest<Request>();
         const user = request.user as UserJwtPayload;
 
-        const organizationId = parseInt(request.params.id);
+        const organizationId = parseInt(request.params.organizationId);
         if (!organizationId) throw new BadRequestException("organization id not provided");
 
         await this.prismaService.organization.findFirstOrThrow({

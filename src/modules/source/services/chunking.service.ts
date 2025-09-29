@@ -1,7 +1,7 @@
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { Injectable } from "@nestjs/common";
 import { OpenAiService } from "src/core/llm/openai/openai.service";
-import { CreateChunkResult } from "src/modules/source/dtos/CreateChunkResult";
+import { CreateChunkResult } from "src/modules/source/dtos/CreateChunks";
 
 @Injectable()
 export class ChunkingService {
