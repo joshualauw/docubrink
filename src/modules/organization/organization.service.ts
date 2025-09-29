@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "nestjs-prisma";
 import { StripeService } from "src/core/payment/stripe/stripe.service";
 import { BcryptService } from "src/core/security/bcrypt/bcrypt.service";
@@ -6,7 +6,6 @@ import { CreateApiKeyDto, CreateApiKeyResponse } from "src/modules/organization/
 import { CreateOrganizationDto, CreateOrganizationResponse } from "src/modules/organization/dtos/CreateOrganization";
 import { DeleteApiKeyDto, DeleteApiKeyResponse } from "src/modules/organization/dtos/DeleteApiKey";
 import { UpdateApiKeyDto, UpdateApiKeyResponse } from "src/modules/organization/dtos/UpdateApiKey";
-import { ALLOWED_SCOPES, OrgScope } from "src/types/OrgScope";
 import { genRandomAlphanum } from "src/utils/common";
 
 @Injectable()
@@ -86,7 +85,7 @@ export class OrganizationService {
     }
 
     async createApiKey(payload: CreateApiKeyDto): Promise<CreateApiKeyResponse> {
-        const generatedKey = "sk_" + genRandomAlphanum(32);
+        const generatedKey = "sk_" + genRandomAlphanum(64);
 
         const apiKey = await this.prismaService.apiKey.create({
             data: {

@@ -30,19 +30,21 @@ enum SourceType {
     MANUAL
 }
 
-enum SourceStatus {
+enum EmbeddingStatus {
     PROCESSING
     FAILED
     DONE
 }
 
 model Plan {
-    planId        Int    @id @default(autoincrement())
-    price         Float
-    name          String
-    apiCallLimit  Int
-    aiTokenLimit  Int
-    stripePriceId String
+    planId              Int    @id @default(autoincrement())
+    price               Float
+    name                String
+    apiCallLimit        Int
+    maxDocuments        Int
+    queryTokenLimit     Int
+    embeddingTokenLimit Int
+    stripePriceId       String
 
     subscriptions Subscription[]
 }
@@ -105,19 +107,21 @@ model Organization {
     aiQueries        AiQuery[]
     apiKeys          ApiKey[]
     organizationUser OrganizationUser[]
+    aiEmbedding      AiEmbedding[]
 }
 
 model Source {
-    sourceId       Int          @id @default(autoincrement())
+    sourceId       Int        @id @default(autoincrement())
     organizationId Int
     title          String
+    rawText        String
     type           SourceType
-    status         SourceStatus
-    createdAt      DateTime     @default(now())
-    updatedAt      DateTime     @updatedAt()
+    createdAt      DateTime   @default(now())
+    updatedAt      DateTime   @updatedAt()
 
     organization Organization  @relation(fields: [organizationId], references: [organizationId])
     sourceChunks SourceChunk[]
+    aiEmbedding  AiEmbedding[]
 }
 
 model SourceChunk {
@@ -129,6 +133,19 @@ model SourceChunk {
     updatedAt     DateTime              @updatedAt()
 
     source Source @relation(fields: [sourceId], references: [sourceId])
+}
+
+model AiEmbedding {
+    aiEmbeddingId  Int             @id @default(autoincrement())
+    sourceId       Int?
+    organizationId Int
+    tokensUsed     Int
+    status         EmbeddingStatus
+    createdAt      DateTime        @default(now())
+    updatedAt      DateTime        @updatedAt()
+
+    organization Organization @relation(fields: [organizationId], references: [organizationId])
+    source       Source?      @relation(fields: [sourceId], references: [sourceId])
 }
 
 model AiQuery {

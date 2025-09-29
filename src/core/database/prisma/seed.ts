@@ -14,8 +14,10 @@ async function planSeeder() {
             {
                 name: "free",
                 apiCallLimit: 1000,
-                aiTokenLimit: 10000,
-                stripePriceId: "price_1SBYLDHTFU6Tpn45Yz0zeu03",
+                queryTokenLimit: 10000,
+                embeddingTokenLimit: 10000,
+                maxDocuments: 50,
+                stripePriceId: "price_1SCDUqQadB7ZZTKOZnW2FIuB",
                 price: 0,
             },
         ],

@@ -23,9 +23,9 @@ export class OrganizationController {
     }
 
     @Post("/:id/api-key")
-    @UsePipes(new ZodValidationPipe(createApiKeyBody))
     @OrganizationRoles("ADMIN")
     @UseGuards(OrganizationRolesGuard)
+    @UsePipes(new ZodValidationPipe(createApiKeyBody))
     async createApiKey(@Param("id", ParseIntPipe) id: number, @Body() body: CreateApiKeyBody) {
         const res = await this.organizationService.createApiKey({ ...body, organizationId: id });
 
@@ -33,9 +33,9 @@ export class OrganizationController {
     }
 
     @Put("/:id/api-key/:apiKeyId")
-    @UsePipes(new ZodValidationPipe(updateApiKeyBody))
     @OrganizationRoles("ADMIN")
     @UseGuards(OrganizationRolesGuard)
+    @UsePipes(new ZodValidationPipe(updateApiKeyBody))
     async updateApiKey(@Param("apiKeyId", ParseIntPipe) apiKeyId: number, @Body() body: UpdateApiKeyBody) {
         const res = await this.organizationService.updateApiKey({ ...body, apiKeyId });
 
