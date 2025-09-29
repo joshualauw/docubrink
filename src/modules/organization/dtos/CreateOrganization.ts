@@ -1,5 +1,5 @@
 import { Organization } from "@prisma/client";
-import * as z from "zod";
+import z from "zod";
 
 export const createOrganizationBody = z.object({
     name: z.string().min(1, "name is required"),

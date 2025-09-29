@@ -1,5 +1,5 @@
 import { Source } from "@prisma/client";
-import * as z from "zod";
+import z from "zod";
 
 export const createSourceBody = z.object({
     title: z.string().min(1, "title is required"),

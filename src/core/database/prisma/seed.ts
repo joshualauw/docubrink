@@ -16,7 +16,7 @@ async function planSeeder() {
                 apiCallLimit: 1000,
                 queryTokenLimit: 10000,
                 embeddingTokenLimit: 10000,
-                maxDocuments: 50,
+                maxSources: 50,
                 stripePriceId: "price_1SCDUqQadB7ZZTKOZnW2FIuB",
                 price: 0,
             },

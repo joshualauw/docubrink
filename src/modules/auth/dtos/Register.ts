@@ -1,5 +1,5 @@
 import { User } from "@prisma/client";
-import * as z from "zod";
+import z from "zod";
 
 export const registerBody = z
     .object({

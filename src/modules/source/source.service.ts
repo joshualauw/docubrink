@@ -1,9 +1,10 @@
 import { Queue } from "bullmq";
 import { InjectQueue } from "@nestjs/bullmq";
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "nestjs-prisma";
 import { CreateSourceDto, CreateSourceResponse } from "src/modules/source/dtos/CreateSource";
 import { QueueKey } from "src/types/QueueKey";
+import dayjs from "dayjs";
 
 @Injectable()
 export class SourceService {
@@ -13,6 +14,43 @@ export class SourceService {
     ) {}
 
     async create(payload: CreateSourceDto): Promise<CreateSourceResponse> {
+        const subscription = await this.prismaService.subscription.findFirstOrThrow({
+            where: { status: "ACTIVE", organizationId: payload.organizationId },
+            select: {
+                plan: { select: { maxSources: true, embeddingTokenLimit: true } },
+            },
+        });
+
+        const sourcesCount = await this.prismaService.source.count({
+            where: { organizationId: payload.organizationId },
+        });
+
+        if (subscription.plan.maxSources <= sourcesCount) {
+            throw new BadRequestException("Maximum sources limit");
+        }
+
+        const startDate = dayjs().startOf("month").toDate();
+        const endDate = dayjs().endOf("month").toDate();
+
+        const embeddingUsage = await this.prismaService.aiEmbedding.aggregate({
+            where: {
+                organizationId: payload.organizationId,
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate,
+                },
+            },
+            _sum: {
+                tokensUsed: true,
+            },
+        });
+
+        const embeddingUsageThisMonth = embeddingUsage._sum.tokensUsed ?? 0;
+
+        if (subscription.plan.embeddingTokenLimit <= embeddingUsageThisMonth) {
+            throw new BadRequestException("Embedding token limit");
+        }
+
         const source = await this.prismaService.source.create({
             data: {
                 organizationId: payload.organizationId,

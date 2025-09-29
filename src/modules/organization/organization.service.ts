@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
+import dayjs from "dayjs";
 import { PrismaService } from "nestjs-prisma";
 import { StripeService } from "src/core/payment/stripe/stripe.service";
 import { BcryptService } from "src/core/security/bcrypt/bcrypt.service";
@@ -30,9 +31,8 @@ export class OrganizationService {
             where: { name: "free" },
         });
 
-        const startDate = new Date();
-        const endDate = new Date(startDate);
-        endDate.setMonth(endDate.getMonth() + 1);
+        const startDate = dayjs();
+        const endDate = startDate.add(1, "month");
 
         const organization = await this.prismaService.$transaction(async (tx) => {
             const organization = await tx.organization.create({
@@ -71,8 +71,8 @@ export class OrganizationService {
                     organizationId: organization.organizationId,
                     planId: basicPlan.planId,
                     status: "ACTIVE",
-                    startDate,
-                    endDate,
+                    startDate: startDate.toDate(),
+                    endDate: endDate.toDate(),
                     stripeCustomerId: customer.id,
                     stripeSubscriptionId: subscription.id,
                 },

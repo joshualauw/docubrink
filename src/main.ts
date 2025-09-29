@@ -4,6 +4,13 @@ import { WinstonModule } from "nest-winston";
 import { createWinstonTransports } from "src/core/logger/winston/winston-setup";
 import { HttpExceptionFilter } from "src/common/filters/http-exception.filter";
 
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
         rawBody: true,
@@ -11,9 +18,9 @@ async function bootstrap() {
         logger: WinstonModule.createLogger({
             transports: createWinstonTransports({
                 fileLogging: true,
-                consoleLogging: true
-            })
-        })
+                consoleLogging: true,
+            }),
+        }),
     });
 
     app.enableShutdownHooks();

@@ -1,6 +1,6 @@
 import { ApiKey } from "@prisma/client";
 import { AllowedScope } from "src/types/OrgScope";
-import * as z from "zod";
+import z from "zod";
 
 export const updateApiKeyBody = z.object({
     name: z.string().min(1, "name is required"),

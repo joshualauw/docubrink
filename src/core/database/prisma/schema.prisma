@@ -41,7 +41,7 @@ model Plan {
     price               Float
     name                String
     apiCallLimit        Int
-    maxDocuments        Int
+    maxSources          Int
     queryTokenLimit     Int
     embeddingTokenLimit Int
     stripePriceId       String
