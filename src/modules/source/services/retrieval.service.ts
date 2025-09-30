@@ -16,7 +16,7 @@ export class RetrievalService {
 
     async vectorSearch(query: string, sourceIds: number[]): Promise<VectorSearchResult> {
         const vectors = await this.openaiService.embedChunks([query]);
-        const vector = vectors[0];
+        const vector = vectors.embeddings[0];
         const vectorString = `[${vector.join(",")}]`;
 
         return await this.prismaService.$queryRaw`

@@ -7,11 +7,14 @@ import { QueueKey } from "src/types/QueueKey";
 import dayjs from "dayjs";
 import { UpdateSourceDto, UpdateSourceResponse } from "src/modules/source/dtos/UpdateSource";
 import { DeleteSourceDto, DeleteSourceResponse } from "src/modules/source/dtos/DeleteSource";
+import { AskSourceDto, AskSourceResponse } from "src/modules/source/dtos/AskSource";
+import { RetrievalService } from "src/modules/source/services/retrieval.service";
 
 @Injectable()
 export class SourceService {
     constructor(
         private prismaService: PrismaService,
+        private retrievalService: RetrievalService,
         @InjectQueue(QueueKey.SOURCE) private sourceQueue: Queue,
     ) {}
 
@@ -88,6 +91,60 @@ export class SourceService {
             where: { sourceId: payload.sourceId },
         });
 
-        return { sourceId: source.sourceId, deletedAt: dayjs().toISOString() };
+        return { sourceId: source.sourceId, timestamp: dayjs().toISOString() };
+    }
+
+    async ask(payload: AskSourceDto): Promise<AskSourceResponse> {
+        const subscription = await this.prismaService.subscription.findFirstOrThrow({
+            where: { status: "ACTIVE", organizationId: payload.organizationId },
+            select: {
+                plan: { select: { maxSources: true, queryTokenLimit: true } },
+            },
+        });
+
+        const startDate = dayjs().startOf("month").toDate();
+        const endDate = dayjs().endOf("month").toDate();
+
+        const queryUsage = await this.prismaService.aiQuery.aggregate({
+            where: {
+                organizationId: payload.organizationId,
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate,
+                },
+            },
+            _sum: {
+                tokensUsed: true,
+            },
+        });
+
+        const queryUsageThisMonth = queryUsage._sum.tokensUsed ?? 0;
+
+        if (subscription.plan.queryTokenLimit <= queryUsageThisMonth) {
+            throw new BadRequestException("Query token limit");
+        }
+
+        const sources = await this.prismaService.source.findMany({
+            where: { organizationId: payload.organizationId },
+            select: { sourceId: true },
+        });
+
+        const chunks = await this.retrievalService.vectorSearch(
+            payload.query,
+            sources.map((s) => s.sourceId),
+        );
+
+        const result = await this.retrievalService.generateAnswer(payload.query, chunks);
+
+        await this.prismaService.aiQuery.create({
+            data: {
+                organizationId: payload.organizationId,
+                queryText: payload.query,
+                responseText: result.output,
+                tokensUsed: result.tokenCost,
+            },
+        });
+
+        return { answer: result.output, timestamp: dayjs().toISOString() };
     }
 }

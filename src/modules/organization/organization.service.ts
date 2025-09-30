@@ -118,6 +118,6 @@ export class OrganizationService {
             where: { apiKeyId: payload.apiKeyId },
         });
 
-        return { apiKeyId: apiKey.apiKeyId, deletedAt: dayjs().toISOString() };
+        return { apiKeyId: apiKey.apiKeyId, timestamp: dayjs().toISOString() };
     }
 }

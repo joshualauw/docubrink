@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Param, ParseIntPipe, Post, Put, UseGuards, Us
 import { ZodValidationPipe } from "src/common/pipes/zod-validation.pipe";
 import { Public } from "src/modules/auth/decorators/public.decorator";
 import { ApiKeyGuard } from "src/modules/organization/guards/api-key.guard";
+import { AskSourceBody, askSourceBody, AskSourceResponse } from "src/modules/source/dtos/AskSource";
 import { CreateSourceBody, createSourceBody, CreateSourceResponse } from "src/modules/source/dtos/CreateSource";
 import { DeleteSourceResponse } from "src/modules/source/dtos/DeleteSource";
 import { updateSourceBody, UpdateSourceBody, UpdateSourceResponse } from "src/modules/source/dtos/UpdateSource";
@@ -24,6 +25,19 @@ export class SourceController {
         const res = await this.sourceService.create({ ...body, organizationId });
 
         return apiResponse("source created", res);
+    }
+
+    @Public()
+    @Post("ask")
+    @UseGuards(ApiKeyGuard)
+    @UsePipes(new ZodValidationPipe(askSourceBody))
+    async ask(
+        @Param("organizationId", ParseIntPipe) organizationId: number,
+        @Body() body: AskSourceBody,
+    ): Promise<ApiResponse<AskSourceResponse>> {
+        const res = await this.sourceService.ask({ ...body, organizationId });
+
+        return apiResponse("ask successful", res);
     }
 
     @Public()
