@@ -9,6 +9,8 @@ import { UpdateSourceDto, UpdateSourceResponse } from "src/modules/source/dtos/U
 import { DeleteSourceDto, DeleteSourceResponse } from "src/modules/source/dtos/DeleteSource";
 import { AskSourceDto, AskSourceResponse } from "src/modules/source/dtos/AskSource";
 import { RetrievalService } from "src/modules/source/services/retrieval.service";
+import { GetAllSourceDto, GetAllSourceResponse } from "src/modules/source/dtos/GetAllSource";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class SourceService {
@@ -17,6 +19,25 @@ export class SourceService {
         private retrievalService: RetrievalService,
         @InjectQueue(QueueKey.SOURCE) private sourceQueue: Queue,
     ) {}
+
+    async getAll(payload: GetAllSourceDto): Promise<GetAllSourceResponse> {
+        const sources = await this.prismaService.source.findMany({
+            where: { organizationId: payload.organizationId },
+            include: {
+                _count: {
+                    select: {
+                        sourceChunks: true,
+                    },
+                },
+            },
+        });
+
+        return sources.map((s) => ({
+            sourceId: s.sourceId,
+            title: s.title,
+            totalChunks: s._count.sourceChunks,
+        }));
+    }
 
     async create(payload: CreateSourceDto): Promise<CreateSourceResponse> {
         const subscription = await this.prismaService.subscription.findFirstOrThrow({
@@ -63,6 +84,7 @@ export class SourceService {
                 rawText: payload.text,
                 type: payload.type,
                 status: "PROCESSING",
+                metadata: payload.metadata,
             },
         });
 
@@ -125,7 +147,12 @@ export class SourceService {
         }
 
         const sources = await this.prismaService.source.findMany({
-            where: { organizationId: payload.organizationId },
+            where: {
+                organizationId: payload.organizationId,
+                metadata: {
+                    equals: payload.metadata,
+                },
+            },
             select: { sourceId: true },
         });
 

@@ -117,6 +117,7 @@ model Source {
     rawText        String
     type           SourceType
     status         SourceStatus
+    metadata       Json?
     createdAt      DateTime     @default(now())
     updatedAt      DateTime     @updatedAt()
 
