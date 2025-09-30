@@ -5,6 +5,7 @@ import { ConfigType } from "@nestjs/config";
 import OpenAI from "openai";
 import openaiConfig from "src/config/openai.config";
 import { EmbedChunksResult } from "src/core/llm/openai/dtos/EmbedChunks";
+import { QueryResponseResult } from "src/core/llm/openai/dtos/QueryResponse";
 
 @Injectable()
 export class OpenAiService {
@@ -32,16 +33,19 @@ export class OpenAiService {
         };
     }
 
-    async getTextResponse(prompt: string): Promise<string> {
+    async getTextResponse(prompt: string): Promise<QueryResponseResult<string>> {
         const result = await this.client.responses.create({
             model: this.openaiCfg.baseModel,
             input: prompt,
         });
 
-        return result.output_text;
+        return {
+            output: result.output_text,
+            tokenCost: result.usage?.total_tokens ?? 0,
+        };
     }
 
-    async getStructuredResponse<T>(prompt: string, format: ZodSchema): Promise<T> {
+    async getStructuredResponse<T>(prompt: string, format: ZodSchema): Promise<QueryResponseResult<T>> {
         const schema = zodTextFormat(format, "json");
 
         const result = await this.client.responses.parse({
@@ -50,6 +54,9 @@ export class OpenAiService {
             text: { format: schema },
         });
 
-        return result.output_parsed as T;
+        return {
+            output: result.output_parsed as T,
+            tokenCost: result.usage?.total_tokens ?? 0,
+        };
     }
 }

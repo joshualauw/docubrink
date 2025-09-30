@@ -59,13 +59,7 @@ export class SourceService {
                 title: payload.title,
                 rawText: payload.text,
                 type: payload.type,
-                aiEmbedding: {
-                    create: {
-                        organizationId: payload.organizationId,
-                        tokensUsed: 0,
-                        status: "PROCESSING",
-                    },
-                },
+                status: "PROCESSING",
             },
         });
 

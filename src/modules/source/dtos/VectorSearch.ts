@@ -1,6 +1,6 @@
 export interface VectorSearchItem {
     sourceChunkId: number;
-    content: string;
+    chunkText: string;
     score: number;
 }
 

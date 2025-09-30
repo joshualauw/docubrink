@@ -30,7 +30,7 @@ enum SourceType {
     MANUAL
 }
 
-enum EmbeddingStatus {
+enum SourceStatus {
     PROCESSING
     FAILED
     DONE
@@ -111,13 +111,14 @@ model Organization {
 }
 
 model Source {
-    sourceId       Int        @id @default(autoincrement())
+    sourceId       Int          @id @default(autoincrement())
     organizationId Int
     title          String
     rawText        String
     type           SourceType
-    createdAt      DateTime   @default(now())
-    updatedAt      DateTime   @updatedAt()
+    status         SourceStatus
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt()
 
     organization Organization  @relation(fields: [organizationId], references: [organizationId])
     sourceChunks SourceChunk[]
@@ -135,13 +136,12 @@ model SourceChunk {
 }
 
 model AiEmbedding {
-    aiEmbeddingId  Int             @id @default(autoincrement())
+    aiEmbeddingId  Int      @id @default(autoincrement())
     sourceId       Int?
     organizationId Int
     tokensUsed     Int
-    status         EmbeddingStatus
-    createdAt      DateTime        @default(now())
-    updatedAt      DateTime        @updatedAt()
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt()
 
     organization Organization @relation(fields: [organizationId], references: [organizationId])
     source       Source?      @relation(fields: [sourceId], references: [sourceId])

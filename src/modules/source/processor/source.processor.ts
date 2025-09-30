@@ -23,7 +23,7 @@ export class SourceProcessor extends WorkerHost {
             });
 
             const cleanedText = this.chunkingService.cleanText(source.rawText);
-            const { chunks, tokenCost } = await this.chunkingService.createChunks(cleanedText);
+            const { chunks, tokenCost } = await this.chunkingService.createChunks(`${cleanedText}`);
 
             const tempValues: any[] = [];
             const placeholders: string[] = [];
@@ -42,23 +42,25 @@ export class SourceProcessor extends WorkerHost {
 
                 await tx.$executeRawUnsafe(query, ...tempValues);
 
-                await tx.aiEmbedding.updateMany({
+                await tx.source.update({
                     where: { sourceId: job.data },
-                    data: { tokensUsed: tokenCost, status: "DONE" },
+                    data: { status: "DONE" },
+                });
+
+                await tx.aiEmbedding.create({
+                    data: {
+                        sourceId: job.data,
+                        organizationId: source.organizationId,
+                        tokensUsed: tokenCost,
+                    },
                 });
             });
         } catch (e: any) {
             this.logger.error(`job ${job.id} failed`, e.message);
 
-            await this.prismaService.$transaction(async (tx) => {
-                await tx.aiEmbedding.updateMany({
-                    where: { sourceId: job.data },
-                    data: { status: "FAILED", sourceId: null },
-                });
-
-                await tx.source.delete({
-                    where: { sourceId: job.data },
-                });
+            await this.prismaService.source.update({
+                where: { sourceId: job.data },
+                data: { status: "FAILED" },
             });
         }
     }
