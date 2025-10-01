@@ -1,10 +1,7 @@
 import dayjs from "dayjs";
-import { Queue } from "bullmq";
-import { InjectQueue } from "@nestjs/bullmq";
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { PrismaService } from "nestjs-prisma";
 import { CreateSourceDto, CreateSourceResponse } from "src/modules/source/dtos/CreateSource";
-import { QueueKey } from "src/types/QueueKey";
 import { UpdateSourceDto, UpdateSourceResponse } from "src/modules/source/dtos/UpdateSource";
 import { DeleteSourceDto, DeleteSourceResponse } from "src/modules/source/dtos/DeleteSource";
 import { AskSourceDto, AskSourceResponse } from "src/modules/source/dtos/AskSource";
@@ -22,13 +19,14 @@ export class SourceService {
         private retrievalService: RetrievalService,
         private chunkingService: ChunkingService,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
-        @InjectQueue(QueueKey.SOURCE) private sourceQueue: Queue,
     ) {}
 
     async getAll(payload: GetAllSourceDto): Promise<GetAllSourceResponse> {
         const sources = await this.prismaService.source.findMany({
             where: { organizationId: payload.organizationId },
-            include: {
+            select: {
+                sourceId: true,
+                title: true,
                 _count: {
                     select: {
                         sourceChunks: true,
@@ -47,9 +45,10 @@ export class SourceService {
     async getDetail(payload: GetDetailSourceDto): Promise<GetDetailSourceResponse> {
         const source = await this.prismaService.source.findFirstOrThrow({
             where: { sourceId: payload.sourceId },
+            select: { sourceId: true, title: true, rawText: true, type: true, metadata: true },
         });
 
-        return pick(source, "sourceId", "title", "rawText", "type", "metadata");
+        return source;
     }
 
     async create(payload: CreateSourceDto): Promise<CreateSourceResponse> {

@@ -6,6 +6,8 @@ import { CreateApiKeyDto, CreateApiKeyResponse } from "src/modules/apiKey/dtos/C
 import { DeleteApiKeyDto, DeleteApiKeyResponse } from "src/modules/apiKey/dtos/DeleteApiKey";
 import { UpdateApiKeyDto, UpdateApiKeyResponse } from "src/modules/apiKey/dtos/UpdateApiKey";
 import { genRandomAlphanum } from "src/utils/common";
+import { GetAllApiKeyDto, GetAllApiKeyResponse } from "src/modules/apiKey/dtos/GetAllApiKey";
+import { GetDetailApiKeyDto, GetDetailApiKeyResponse } from "src/modules/apiKey/dtos/GetDetailApiKey";
 
 @Injectable()
 export class ApiKeyService {
@@ -13,6 +15,24 @@ export class ApiKeyService {
         private prismaService: PrismaService,
         private bcryptService: BcryptService,
     ) {}
+
+    async getAll(payload: GetAllApiKeyDto): Promise<GetAllApiKeyResponse> {
+        const apiKeys = await this.prismaService.apiKey.findMany({
+            where: { organizationId: payload.organizationId },
+            select: { apiKeyId: true, name: true, isActive: true },
+        });
+
+        return apiKeys;
+    }
+
+    async getDetail(payload: GetDetailApiKeyDto): Promise<GetDetailApiKeyResponse> {
+        const apiKey = await this.prismaService.apiKey.findFirstOrThrow({
+            where: { apiKeyId: payload.apiKeyId },
+            select: { apiKeyId: true, name: true, scopes: true, isActive: true },
+        });
+
+        return apiKey;
+    }
 
     async create(payload: CreateApiKeyDto): Promise<CreateApiKeyResponse> {
         const generatedKey = "sk_" + genRandomAlphanum(64);

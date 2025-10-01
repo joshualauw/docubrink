@@ -26,17 +26,17 @@ export class SourceController {
     ): Promise<ApiResponse<GetAllSourceResponse>> {
         const res = await this.sourceService.getAll({ organizationId });
 
-        return apiResponse("sources fetched", res);
+        return apiResponse("get all source successful", res);
     }
 
     @Public()
-    @Get("/:sourceId")
+    @Get(":sourceId")
     @ApiKeyScopes("source.read")
     @UseGuards(ApiKeyGuard)
     async getDetail(@Param("sourceId", ParseIntPipe) sourceId: number): Promise<ApiResponse<GetDetailSourceResponse>> {
         const res = await this.sourceService.getDetail({ sourceId });
 
-        return apiResponse("source fetched", res);
+        return apiResponse("get detail source successful", res);
     }
 
     @Public()
@@ -68,7 +68,7 @@ export class SourceController {
     }
 
     @Public()
-    @Put("/:sourceId")
+    @Put(":sourceId")
     @ApiKeyScopes("source.write")
     @UseGuards(ApiKeyGuard)
     @UsePipes(new ZodValidationPipe(updateSourceBody))
@@ -82,7 +82,7 @@ export class SourceController {
     }
 
     @Public()
-    @Delete("/:sourceId")
+    @Delete(":sourceId")
     @ApiKeyScopes("source.delete")
     @UseGuards(ApiKeyGuard)
     async delete(@Param("sourceId", ParseIntPipe) sourceId: number): Promise<ApiResponse<DeleteSourceResponse>> {
