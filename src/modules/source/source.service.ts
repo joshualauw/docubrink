@@ -12,6 +12,8 @@ import { RetrievalService } from "src/modules/source/services/retrieval.service"
 import { GetAllSourceDto, GetAllSourceResponse } from "src/modules/source/dtos/GetAllSource";
 import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
 import { ChunkingService } from "src/modules/source/services/chunking.service";
+import { GetDetailSourceDto, GetDetailSourceResponse } from "src/modules/source/dtos/GetDetailSource";
+import { pick } from "src/utils/common";
 
 @Injectable()
 export class SourceService {
@@ -40,6 +42,14 @@ export class SourceService {
             title: s.title,
             totalChunks: s._count.sourceChunks,
         }));
+    }
+
+    async getDetail(payload: GetDetailSourceDto): Promise<GetDetailSourceResponse> {
+        const source = await this.prismaService.source.findFirstOrThrow({
+            where: { sourceId: payload.sourceId },
+        });
+
+        return pick(source, "sourceId", "title", "rawText", "type", "metadata");
     }
 
     async create(payload: CreateSourceDto): Promise<CreateSourceResponse> {

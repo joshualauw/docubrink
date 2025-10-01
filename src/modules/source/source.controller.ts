@@ -6,6 +6,7 @@ import { AskSourceBody, askSourceBody, AskSourceResponse } from "src/modules/sou
 import { CreateSourceBody, createSourceBody, CreateSourceResponse } from "src/modules/source/dtos/CreateSource";
 import { DeleteSourceResponse } from "src/modules/source/dtos/DeleteSource";
 import { GetAllSourceResponse } from "src/modules/source/dtos/GetAllSource";
+import { GetDetailSourceResponse } from "src/modules/source/dtos/GetDetailSource";
 import { updateSourceBody, UpdateSourceBody, UpdateSourceResponse } from "src/modules/source/dtos/UpdateSource";
 import { SourceService } from "src/modules/source/source.service";
 import { ApiResponse } from "src/types/ApiResponse";
@@ -24,6 +25,15 @@ export class SourceController {
         const res = await this.sourceService.getAll({ organizationId });
 
         return apiResponse("sources fetched", res);
+    }
+
+    @Public()
+    @Get("/:sourceId")
+    @UseGuards(ApiKeyGuard)
+    async getDetail(@Param("sourceId", ParseIntPipe) sourceId: number): Promise<ApiResponse<GetDetailSourceResponse>> {
+        const res = await this.sourceService.getDetail({ sourceId });
+
+        return apiResponse("source fetched", res);
     }
 
     @Public()
