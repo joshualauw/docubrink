@@ -16,6 +16,7 @@ import jwtConfig from "src/config/jwt.config";
 import openaiConfig from "src/config/openai.config";
 import redisConfig from "src/config/redis.config";
 import stripeConfig from "src/config/stripe.config";
+import { ApiKeyModule } from "src/modules/apiKey/api-key.module";
 
 @Module({
     imports: [
@@ -39,6 +40,7 @@ import stripeConfig from "src/config/stripe.config";
         }),
         AuthModule,
         OrganizationModule,
+        ApiKeyModule,
         SourceModule,
         WebhookModule,
     ],

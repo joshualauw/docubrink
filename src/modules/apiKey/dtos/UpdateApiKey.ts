@@ -1,5 +1,5 @@
 import { ApiKey } from "@prisma/client";
-import { AllowedScope } from "src/types/OrgScope";
+import { AllowedScope } from "src/types/ApiKeyScope";
 import z from "zod";
 
 export const updateApiKeyBody = z.object({

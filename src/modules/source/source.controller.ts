@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, UseGuards, UsePipes } from "@nestjs/common";
 import { ZodValidationPipe } from "src/common/pipes/zod-validation.pipe";
+import { ApiKeyScopes } from "src/modules/apiKey/decorators/api-key-scope.decorator";
+import { ApiKeyGuard } from "src/modules/apiKey/guards/api-key.guard";
 import { Public } from "src/modules/auth/decorators/public.decorator";
-import { ApiKeyGuard } from "src/modules/organization/guards/api-key.guard";
 import { AskSourceBody, askSourceBody, AskSourceResponse } from "src/modules/source/dtos/AskSource";
 import { CreateSourceBody, createSourceBody, CreateSourceResponse } from "src/modules/source/dtos/CreateSource";
 import { DeleteSourceResponse } from "src/modules/source/dtos/DeleteSource";
@@ -18,6 +19,7 @@ export class SourceController {
 
     @Public()
     @Get()
+    @ApiKeyScopes("source.read")
     @UseGuards(ApiKeyGuard)
     async getAll(
         @Param("organizationId", ParseIntPipe) organizationId: number,
@@ -29,6 +31,7 @@ export class SourceController {
 
     @Public()
     @Get("/:sourceId")
+    @ApiKeyScopes("source.read")
     @UseGuards(ApiKeyGuard)
     async getDetail(@Param("sourceId", ParseIntPipe) sourceId: number): Promise<ApiResponse<GetDetailSourceResponse>> {
         const res = await this.sourceService.getDetail({ sourceId });
@@ -38,6 +41,7 @@ export class SourceController {
 
     @Public()
     @Post()
+    @ApiKeyScopes("source.write")
     @UseGuards(ApiKeyGuard)
     @UsePipes(new ZodValidationPipe(createSourceBody))
     async create(
@@ -51,6 +55,7 @@ export class SourceController {
 
     @Public()
     @Post("ask")
+    @ApiKeyScopes("source.query")
     @UseGuards(ApiKeyGuard)
     @UsePipes(new ZodValidationPipe(askSourceBody))
     async ask(
@@ -64,6 +69,7 @@ export class SourceController {
 
     @Public()
     @Put("/:sourceId")
+    @ApiKeyScopes("source.write")
     @UseGuards(ApiKeyGuard)
     @UsePipes(new ZodValidationPipe(updateSourceBody))
     async update(
@@ -77,6 +83,7 @@ export class SourceController {
 
     @Public()
     @Delete("/:sourceId")
+    @ApiKeyScopes("source.delete")
     @UseGuards(ApiKeyGuard)
     async delete(@Param("sourceId", ParseIntPipe) sourceId: number): Promise<ApiResponse<DeleteSourceResponse>> {
         const res = await this.sourceService.delete({ sourceId });
