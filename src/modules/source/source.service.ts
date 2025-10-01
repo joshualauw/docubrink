@@ -96,8 +96,9 @@ export class SourceService {
 
             const now = dayjs();
             const firstDayNextMonth = now.add(1, "month").startOf("month");
+            const ttl = firstDayNextMonth.diff(now, "second");
 
-            await this.cacheManager.set(cacheKey, firstDayNextMonth.diff(now, "second"));
+            await this.cacheManager.set(cacheKey, embeddingUsageThisMonth, ttl);
         }
 
         const cleanedText = this.chunkingService.cleanText(payload.text);
@@ -206,8 +207,9 @@ export class SourceService {
 
             const now = dayjs();
             const firstDayNextMonth = now.add(1, "month").startOf("month");
+            const ttl = firstDayNextMonth.diff(now, "second");
 
-            await this.cacheManager.set(cacheKey, firstDayNextMonth.diff(now, "second"));
+            await this.cacheManager.set(cacheKey, queryUsageThisMonth, ttl);
         }
 
         const sources = await this.prismaService.source.findMany({
