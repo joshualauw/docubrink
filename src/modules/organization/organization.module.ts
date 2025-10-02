@@ -3,12 +3,13 @@ import { PaymentModule } from "src/core/payment/payment.module";
 import { SecurityModule } from "src/core/security/security.module";
 import { OrganizationController } from "src/modules/organization/organization.controller";
 import { OrganizationService } from "src/modules/organization/organization.service";
-import { OrganizationContext } from "src/modules/organization/services/organization-context.service";
+import { OrganizationContextService } from "src/modules/organization/services/organization-context.service";
+import { OrganizationUserContextService } from "src/modules/organization/services/organization-user-context.service";
 
 @Module({
     imports: [PaymentModule, SecurityModule],
     controllers: [OrganizationController],
-    providers: [OrganizationService, OrganizationContext],
-    exports: [OrganizationContext],
+    providers: [OrganizationService, OrganizationContextService, OrganizationUserContextService],
+    exports: [OrganizationContextService, OrganizationUserContextService],
 })
 export class OrganizationModule {}

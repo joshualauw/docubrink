@@ -9,9 +9,7 @@ export const createOrganizationBody = z.object({
 
 export type CreateOrganizationBody = z.infer<typeof createOrganizationBody>;
 
-export type CreateOrganizationDto = CreateOrganizationBody & {
-    userId: number;
-};
+export type CreateOrganizationDto = CreateOrganizationBody;
 
 export type CreateOrganizationResponse = Pick<Organization, "organizationId"> & {
     createdAt: string;

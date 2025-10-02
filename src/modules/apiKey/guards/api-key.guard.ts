@@ -3,7 +3,7 @@ import { Reflector } from "@nestjs/core";
 import { Request } from "express";
 import { PrismaService } from "nestjs-prisma";
 import { CryptoService } from "src/core/security/crypto/crypto.service";
-import { OrganizationContext } from "src/modules/organization/services/organization-context.service";
+import { OrganizationContextService } from "src/modules/organization/services/organization-context.service";
 import { ApiKeyScope } from "src/types/ApiKeyScope";
 
 @Injectable()
@@ -12,7 +12,7 @@ export class ApiKeyGuard implements CanActivate {
         private reflector: Reflector,
         private prismaService: PrismaService,
         private cryptoService: CryptoService,
-        private organizationContext: OrganizationContext,
+        private organizationContextService: OrganizationContextService,
     ) {}
 
     async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -37,7 +37,7 @@ export class ApiKeyGuard implements CanActivate {
 
         if (!apiKey) throw new ForbiddenException("Invalid API Key");
 
-        this.organizationContext.set(apiKey.organizationId);
+        this.organizationContextService.set(apiKey.organizationId);
 
         return true;
     }

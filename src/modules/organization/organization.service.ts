@@ -3,18 +3,22 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "nestjs-prisma";
 import { StripeService } from "src/core/payment/stripe/stripe.service";
 import { CreateOrganizationDto, CreateOrganizationResponse } from "src/modules/organization/dtos/CreateOrganization";
+import { OrganizationUserContextService } from "src/modules/organization/services/organization-user-context.service";
 
 @Injectable()
 export class OrganizationService {
     constructor(
         private prismaService: PrismaService,
         private stripeService: StripeService,
+        private organizationUserContextService: OrganizationUserContextService,
     ) {}
 
     async create(payload: CreateOrganizationDto): Promise<CreateOrganizationResponse> {
+        const organizationUser = this.organizationUserContextService.get();
+
         const organizationCountByUser = await this.prismaService.organizationUser.count({
             where: {
-                userId: payload.userId,
+                userId: organizationUser.userId,
                 role: "ADMIN",
             },
         });
@@ -37,7 +41,7 @@ export class OrganizationService {
                     stripeCustomerId: "",
                     organizationUser: {
                         create: {
-                            userId: payload.userId,
+                            userId: organizationUser.userId,
                             role: "ADMIN",
                         },
                     },

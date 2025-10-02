@@ -3,6 +3,7 @@ import { Reflector } from "@nestjs/core";
 import { Role } from "@prisma/client";
 import { Request } from "express";
 import { PrismaService } from "nestjs-prisma";
+import { OrganizationUserContextService } from "src/modules/organization/services/organization-user-context.service";
 import { UserJwtPayload } from "src/types/UserJwtPayload";
 
 @Injectable()
@@ -10,6 +11,7 @@ export class OrganizationRolesGuard implements CanActivate {
     constructor(
         private reflector: Reflector,
         private prismaService: PrismaService,
+        private organizationUserContextService: OrganizationUserContextService,
     ) {}
 
     async canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -36,6 +38,13 @@ export class OrganizationRolesGuard implements CanActivate {
         if (!roleUser) {
             throw new ForbiddenException("User doesn't have permission to perform this action");
         }
+
+        this.organizationUserContextService.set({
+            organizationUserId: roleUser.organizationUserId,
+            organizationId,
+            userId: user.userId,
+            role: roleUser.role,
+        });
 
         return true;
     }

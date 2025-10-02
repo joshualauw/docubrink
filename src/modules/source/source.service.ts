@@ -10,7 +10,7 @@ import { GetAllSourceResponse } from "src/modules/source/dtos/GetAllSource";
 import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
 import { ChunkingService } from "src/modules/source/services/chunking.service";
 import { GetDetailSourceDto, GetDetailSourceResponse } from "src/modules/source/dtos/GetDetailSource";
-import { OrganizationContext } from "src/modules/organization/services/organization-context.service";
+import { OrganizationContextService } from "src/modules/organization/services/organization-context.service";
 
 @Injectable()
 export class SourceService {
@@ -18,12 +18,12 @@ export class SourceService {
         private prismaService: PrismaService,
         private retrievalService: RetrievalService,
         private chunkingService: ChunkingService,
-        private organizationContext: OrganizationContext,
+        private organizationContextService: OrganizationContextService,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
     ) {}
 
     async getAll(): Promise<GetAllSourceResponse> {
-        const organizationId = this.organizationContext.get();
+        const organizationId = this.organizationContextService.get();
 
         const sources = await this.prismaService.source.findMany({
             where: { organizationId },
@@ -55,7 +55,7 @@ export class SourceService {
     }
 
     async create(payload: CreateSourceDto): Promise<CreateSourceResponse> {
-        const organizationId = this.organizationContext.get();
+        const organizationId = this.organizationContextService.get();
 
         const subscription = await this.prismaService.subscription.findFirstOrThrow({
             where: { status: "ACTIVE", organizationId },
@@ -176,7 +176,7 @@ export class SourceService {
     }
 
     async ask(payload: AskSourceDto): Promise<AskSourceResponse> {
-        const organizationId = this.organizationContext.get();
+        const organizationId = this.organizationContextService.get();
 
         const subscription = await this.prismaService.subscription.findFirstOrThrow({
             where: { status: "ACTIVE", organizationId },
