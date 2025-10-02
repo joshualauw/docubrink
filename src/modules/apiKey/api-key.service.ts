@@ -1,19 +1,19 @@
 import dayjs from "dayjs";
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "nestjs-prisma";
-import { BcryptService } from "src/core/security/bcrypt/bcrypt.service";
 import { CreateApiKeyDto, CreateApiKeyResponse } from "src/modules/apiKey/dtos/CreateApiKey";
 import { DeleteApiKeyDto, DeleteApiKeyResponse } from "src/modules/apiKey/dtos/DeleteApiKey";
 import { UpdateApiKeyDto, UpdateApiKeyResponse } from "src/modules/apiKey/dtos/UpdateApiKey";
 import { genRandomAlphanum } from "src/utils/common";
 import { GetAllApiKeyDto, GetAllApiKeyResponse } from "src/modules/apiKey/dtos/GetAllApiKey";
 import { GetDetailApiKeyDto, GetDetailApiKeyResponse } from "src/modules/apiKey/dtos/GetDetailApiKey";
+import { CryptoService } from "src/core/security/crypto/crypto.service";
 
 @Injectable()
 export class ApiKeyService {
     constructor(
         private prismaService: PrismaService,
-        private bcryptService: BcryptService,
+        private cryptoService: CryptoService,
     ) {}
 
     async getAll(payload: GetAllApiKeyDto): Promise<GetAllApiKeyResponse> {
@@ -43,7 +43,7 @@ export class ApiKeyService {
                 scopes: payload.scopes,
                 name: payload.name,
                 isActive: true,
-                keyHash: await this.bcryptService.hash(generatedKey),
+                keyHash: this.cryptoService.hash(generatedKey),
             },
         });
 

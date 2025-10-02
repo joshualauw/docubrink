@@ -6,11 +6,11 @@ import { UpdateSourceDto, UpdateSourceResponse } from "src/modules/source/dtos/U
 import { DeleteSourceDto, DeleteSourceResponse } from "src/modules/source/dtos/DeleteSource";
 import { AskSourceDto, AskSourceResponse } from "src/modules/source/dtos/AskSource";
 import { RetrievalService } from "src/modules/source/services/retrieval.service";
-import { GetAllSourceDto, GetAllSourceResponse } from "src/modules/source/dtos/GetAllSource";
+import { GetAllSourceResponse } from "src/modules/source/dtos/GetAllSource";
 import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
 import { ChunkingService } from "src/modules/source/services/chunking.service";
 import { GetDetailSourceDto, GetDetailSourceResponse } from "src/modules/source/dtos/GetDetailSource";
-import { pick } from "src/utils/common";
+import { OrganizationContext } from "src/modules/organization/services/organization-context.service";
 
 @Injectable()
 export class SourceService {
@@ -18,12 +18,15 @@ export class SourceService {
         private prismaService: PrismaService,
         private retrievalService: RetrievalService,
         private chunkingService: ChunkingService,
+        private organizationContext: OrganizationContext,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
     ) {}
 
-    async getAll(payload: GetAllSourceDto): Promise<GetAllSourceResponse> {
+    async getAll(): Promise<GetAllSourceResponse> {
+        const organizationId = this.organizationContext.get();
+
         const sources = await this.prismaService.source.findMany({
-            where: { organizationId: payload.organizationId },
+            where: { organizationId },
             select: {
                 sourceId: true,
                 title: true,
@@ -52,22 +55,24 @@ export class SourceService {
     }
 
     async create(payload: CreateSourceDto): Promise<CreateSourceResponse> {
+        const organizationId = this.organizationContext.get();
+
         const subscription = await this.prismaService.subscription.findFirstOrThrow({
-            where: { status: "ACTIVE", organizationId: payload.organizationId },
+            where: { status: "ACTIVE", organizationId },
             select: {
                 plan: { select: { maxSources: true, embeddingTokenLimit: true } },
             },
         });
 
         const sourcesCount = await this.prismaService.source.count({
-            where: { organizationId: payload.organizationId },
+            where: { organizationId },
         });
 
         if (subscription.plan.maxSources <= sourcesCount) {
             throw new BadRequestException("Maximum sources limit");
         }
 
-        const cacheKey = `organization-${payload.organizationId}:ai-embedding:${dayjs().format("MM-YYYY")}`;
+        const cacheKey = `organization-${organizationId}:ai-embedding:${dayjs().format("MM-YYYY")}`;
         const cacheValue = await this.cacheManager.get<number>(cacheKey);
 
         let embeddingUsageThisMonth = 0;
@@ -80,7 +85,7 @@ export class SourceService {
 
             const embeddingUsage = await this.prismaService.aiEmbedding.aggregate({
                 where: {
-                    organizationId: payload.organizationId,
+                    organizationId,
                     createdAt: {
                         gte: startDate,
                         lte: endDate,
@@ -115,7 +120,7 @@ export class SourceService {
         const source = await this.prismaService.$transaction(async (tx) => {
             const source = await this.prismaService.source.create({
                 data: {
-                    organizationId: payload.organizationId,
+                    organizationId,
                     title: payload.title,
                     rawText: payload.text,
                     type: payload.type,
@@ -171,14 +176,16 @@ export class SourceService {
     }
 
     async ask(payload: AskSourceDto): Promise<AskSourceResponse> {
+        const organizationId = this.organizationContext.get();
+
         const subscription = await this.prismaService.subscription.findFirstOrThrow({
-            where: { status: "ACTIVE", organizationId: payload.organizationId },
+            where: { status: "ACTIVE", organizationId },
             select: {
                 plan: { select: { maxSources: true, queryTokenLimit: true } },
             },
         });
 
-        const cacheKey = `organization-${payload.organizationId}:ai-query:${dayjs().format("MM-YYYY")}`;
+        const cacheKey = `organization-${organizationId}:ai-query:${dayjs().format("MM-YYYY")}`;
         const cacheValue = await this.cacheManager.get<number>(cacheKey);
 
         let queryUsageThisMonth = 0;
@@ -191,7 +198,7 @@ export class SourceService {
 
             const queryUsage = await this.prismaService.aiQuery.aggregate({
                 where: {
-                    organizationId: payload.organizationId,
+                    organizationId,
                     createdAt: {
                         gte: startDate,
                         lte: endDate,
@@ -213,7 +220,7 @@ export class SourceService {
 
         const sources = await this.prismaService.source.findMany({
             where: {
-                organizationId: payload.organizationId,
+                organizationId,
                 metadata: {
                     equals: payload.metadata,
                 },
@@ -235,7 +242,7 @@ export class SourceService {
 
         await this.prismaService.aiQuery.create({
             data: {
-                organizationId: payload.organizationId,
+                organizationId,
                 queryText: payload.query,
                 responseText: result.output,
                 tokensUsed: result.tokenCost,

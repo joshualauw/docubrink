@@ -1,4 +1,4 @@
-import { Organization, Source } from "@prisma/client";
+import { Source } from "@prisma/client";
 import z from "zod";
 
 export const createSourceBody = z.object({
@@ -10,7 +10,7 @@ export const createSourceBody = z.object({
 
 export type CreateSourceBody = z.infer<typeof createSourceBody>;
 
-export type CreateSourceDto = CreateSourceBody & Pick<Organization, "organizationId">;
+export type CreateSourceDto = CreateSourceBody;
 
 export type CreateSourceResponse = Pick<Source, "sourceId"> & {
     createdAt: string;

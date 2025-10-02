@@ -1,6 +1,4 @@
-import { Organization, Source } from "@prisma/client";
-
-export type GetAllSourceDto = Pick<Organization, "organizationId">;
+import { Source } from "@prisma/client";
 
 export type GetAllSourceResponse = (Pick<Source, "sourceId" | "title"> & {
     totalChunks: number;

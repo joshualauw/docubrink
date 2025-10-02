@@ -1,4 +1,3 @@
-import { Organization } from "@prisma/client";
 import z from "zod";
 
 export const askSourceBody = z.object({
@@ -8,7 +7,7 @@ export const askSourceBody = z.object({
 
 export type AskSourceBody = z.infer<typeof askSourceBody>;
 
-export type AskSourceDto = AskSourceBody & Pick<Organization, "organizationId">;
+export type AskSourceDto = AskSourceBody;
 
 export interface AskSourceResponse {
     answer: string;

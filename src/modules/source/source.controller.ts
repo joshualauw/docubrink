@@ -13,7 +13,7 @@ import { SourceService } from "src/modules/source/source.service";
 import { ApiResponse } from "src/types/ApiResponse";
 import { apiResponse } from "src/utils/api";
 
-@Controller("/api/:organizationId/source")
+@Controller("/api/source")
 export class SourceController {
     constructor(private sourceService: SourceService) {}
 
@@ -21,10 +21,8 @@ export class SourceController {
     @Get()
     @ApiKeyScopes("source.read")
     @UseGuards(ApiKeyGuard)
-    async getAll(
-        @Param("organizationId", ParseIntPipe) organizationId: number,
-    ): Promise<ApiResponse<GetAllSourceResponse>> {
-        const res = await this.sourceService.getAll({ organizationId });
+    async getAll(): Promise<ApiResponse<GetAllSourceResponse>> {
+        const res = await this.sourceService.getAll();
 
         return apiResponse("get all source successful", res);
     }
@@ -44,11 +42,8 @@ export class SourceController {
     @ApiKeyScopes("source.write")
     @UseGuards(ApiKeyGuard)
     @UsePipes(new ZodValidationPipe(createSourceBody))
-    async create(
-        @Param("organizationId", ParseIntPipe) organizationId: number,
-        @Body() body: CreateSourceBody,
-    ): Promise<ApiResponse<CreateSourceResponse>> {
-        const res = await this.sourceService.create({ ...body, organizationId });
+    async create(@Body() body: CreateSourceBody): Promise<ApiResponse<CreateSourceResponse>> {
+        const res = await this.sourceService.create(body);
 
         return apiResponse("source created", res);
     }
@@ -58,11 +53,8 @@ export class SourceController {
     @ApiKeyScopes("source.query")
     @UseGuards(ApiKeyGuard)
     @UsePipes(new ZodValidationPipe(askSourceBody))
-    async ask(
-        @Param("organizationId", ParseIntPipe) organizationId: number,
-        @Body() body: AskSourceBody,
-    ): Promise<ApiResponse<AskSourceResponse>> {
-        const res = await this.sourceService.ask({ ...body, organizationId });
+    async ask(@Body() body: AskSourceBody): Promise<ApiResponse<AskSourceResponse>> {
+        const res = await this.sourceService.ask(body);
 
         return apiResponse("ask successful", res);
     }

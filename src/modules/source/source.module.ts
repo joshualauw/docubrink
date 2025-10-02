@@ -13,6 +13,7 @@ import { SourceController } from "src/modules/source/source.controller";
 import { SourceService } from "src/modules/source/source.service";
 import { QueueKey } from "src/types/QueueKey";
 import { ApiKeyModule } from "src/modules/apiKey/api-key.module";
+import { OrganizationModule } from "src/modules/organization/organization.module";
 
 @Module({
     imports: [
@@ -27,6 +28,7 @@ import { ApiKeyModule } from "src/modules/apiKey/api-key.module";
             }),
             inject: [redisConfig.KEY],
         }),
+        OrganizationModule,
     ],
     controllers: [SourceController],
     providers: [SourceService, SourceProcessor, ChunkingService, RetrievalService],
