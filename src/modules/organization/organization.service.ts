@@ -4,6 +4,7 @@ import { PrismaService } from "nestjs-prisma";
 import { StripeService } from "src/core/payment/stripe/stripe.service";
 import { CreateOrganizationDto, CreateOrganizationResponse } from "src/modules/organization/dtos/CreateOrganization";
 import { OrganizationUserContextService } from "src/modules/organization/services/organization-user-context.service";
+import { GetAllOrganizationResponse } from "src/modules/organization/dtos/GetAllOrganization";
 
 @Injectable()
 export class OrganizationService {
@@ -12,6 +13,21 @@ export class OrganizationService {
         private stripeService: StripeService,
         private organizationUserContextService: OrganizationUserContextService,
     ) {}
+
+    async getAll(): Promise<GetAllOrganizationResponse> {
+        const organizationUser = this.organizationUserContextService.get();
+
+        const organizations = await this.prismaService.organizationUser.findMany({
+            where: { organizationUserId: organizationUser.organizationUserId },
+            include: { organization: true },
+        });
+
+        return organizations.map((o) => ({
+            organizationId: o.organizationId,
+            name: o.organization.name,
+            role: o.role,
+        }));
+    }
 
     async create(payload: CreateOrganizationDto): Promise<CreateOrganizationResponse> {
         const organizationUser = this.organizationUserContextService.get();
