@@ -5,6 +5,7 @@ import { StripeService } from "src/core/payment/stripe/stripe.service";
 import { CreateOrganizationDto, CreateOrganizationResponse } from "src/modules/organization/dtos/CreateOrganization";
 import { OrganizationUserContextService } from "src/modules/organization/services/organization-user-context.service";
 import { GetAllOrganizationResponse } from "src/modules/organization/dtos/GetAllOrganization";
+import { UserContextService } from "src/modules/auth/services/user-context.service";
 
 @Injectable()
 export class OrganizationService {
@@ -12,13 +13,14 @@ export class OrganizationService {
         private prismaService: PrismaService,
         private stripeService: StripeService,
         private organizationUserContextService: OrganizationUserContextService,
+        private userContextService: UserContextService,
     ) {}
 
     async getAll(): Promise<GetAllOrganizationResponse> {
-        const organizationUser = this.organizationUserContextService.get();
+        const user = this.userContextService.get();
 
         const organizations = await this.prismaService.organizationUser.findMany({
-            where: { organizationUserId: organizationUser.organizationUserId },
+            where: { userId: user.userId },
             include: { organization: true },
         });
 

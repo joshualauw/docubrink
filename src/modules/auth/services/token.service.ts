@@ -7,12 +7,12 @@ import jwtConfig from "src/config/jwt.config";
 @Injectable()
 export class TokenService {
     constructor(
-        private jwt: JwtService,
+        private jwtService: JwtService,
         @Inject(jwtConfig.KEY) private jwtCfg: ConfigType<typeof jwtConfig>,
     ) {}
 
     generateToken(payload: GetAuthTokenDto): AuthToken {
-        const accessToken = this.jwt.sign({
+        const accessToken = this.jwtService.sign({
             sub: payload.userId.toString(),
             userId: payload.userId,
             email: payload.email,

@@ -12,12 +12,10 @@ import { RetrievalService } from "src/modules/source/services/retrieval.service"
 import { SourceController } from "src/modules/source/source.controller";
 import { SourceService } from "src/modules/source/source.service";
 import { QueueKey } from "src/types/QueueKey";
-import { ApiKeyModule } from "src/modules/apiKey/api-key.module";
 import { OrganizationModule } from "src/modules/organization/organization.module";
 
 @Module({
     imports: [
-        ApiKeyModule,
         SecurityModule,
         LlmModule,
         BullModule.registerQueue({ name: QueueKey.SOURCE }),

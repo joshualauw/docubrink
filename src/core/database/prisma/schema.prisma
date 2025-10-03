@@ -7,6 +7,12 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum InvitationStatus {
+    INVITED
+    ACCEPTED
+    REJECTED
+}
+
 enum SubscriptionStatus {
     PENDING
     ACTIVE
@@ -93,6 +99,20 @@ model OrganizationUser {
     user         User         @relation(fields: [userId], references: [userId])
 }
 
+model OrganizationInvite {
+    organizationInviteId Int              @id @default(autoincrement())
+    organizationId       Int
+    email                String
+    status               InvitationStatus
+    code                 String
+    role                 Role
+    expiredDate          DateTime
+    createdAt            DateTime         @default(now())
+    updatedAt            DateTime         @updatedAt()
+
+    organization Organization @relation(fields: [organizationId], references: [organizationId])
+}
+
 model Organization {
     organizationId   Int      @id @default(autoincrement())
     name             String
@@ -102,12 +122,13 @@ model Organization {
     createdAt        DateTime @default(now())
     updatedAt        DateTime @updatedAt()
 
-    subscriptions    Subscription[]
-    sources          Source[]
-    aiQueries        AiQuery[]
-    apiKeys          ApiKey[]
-    organizationUser OrganizationUser[]
-    aiEmbedding      AiEmbedding[]
+    subscriptions      Subscription[]
+    sources            Source[]
+    aiQueries          AiQuery[]
+    apiKeys            ApiKey[]
+    organizationUser   OrganizationUser[]
+    aiEmbedding        AiEmbedding[]
+    OrganizationInvite OrganizationInvite[]
 }
 
 model Source {

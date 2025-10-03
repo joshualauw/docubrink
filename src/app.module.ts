@@ -17,6 +17,7 @@ import openaiConfig from "src/config/openai.config";
 import redisConfig from "src/config/redis.config";
 import stripeConfig from "src/config/stripe.config";
 import { ApiKeyModule } from "src/modules/apiKey/api-key.module";
+import { OrganizationUserModule } from "src/modules/organizationUser/organization-user.module";
 
 @Module({
     imports: [
@@ -40,6 +41,7 @@ import { ApiKeyModule } from "src/modules/apiKey/api-key.module";
         }),
         AuthModule,
         OrganizationModule,
+        OrganizationUserModule,
         ApiKeyModule,
         SourceModule,
         WebhookModule,

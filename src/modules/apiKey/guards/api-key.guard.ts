@@ -16,7 +16,10 @@ export class ApiKeyGuard implements CanActivate {
     ) {}
 
     async canActivate(ctx: ExecutionContext): Promise<boolean> {
-        const requiredScopes = this.reflector.get<ApiKeyScope[]>("scopes", ctx.getHandler());
+        const requiredScopes = this.reflector.getAllAndOverride<ApiKeyScope[]>("scopes", [
+            ctx.getHandler(),
+            ctx.getClass(),
+        ]);
 
         if (!requiredScopes) {
             return true;

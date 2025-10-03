@@ -15,7 +15,7 @@ export class OrganizationRolesGuard implements CanActivate {
     ) {}
 
     async canActivate(ctx: ExecutionContext): Promise<boolean> {
-        const requiredRoles = this.reflector.get<Role[]>("roles", ctx.getHandler());
+        const requiredRoles = this.reflector.getAllAndOverride<Role[]>("roles", [ctx.getHandler(), ctx.getClass()]);
 
         if (!requiredRoles) {
             return true;
