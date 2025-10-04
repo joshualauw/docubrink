@@ -9,9 +9,7 @@ export const createApiKeyBody = z.object({
 
 export type CreateApiKeyBody = z.infer<typeof createApiKeyBody>;
 
-export type CreateApiKeyDto = CreateApiKeyBody & {
-    organizationId: number;
-};
+export type CreateApiKeyDto = CreateApiKeyBody;
 
 export type CreateApiKeyResponse = Pick<ApiKey, "apiKeyId"> & {
     generatedKey: string;

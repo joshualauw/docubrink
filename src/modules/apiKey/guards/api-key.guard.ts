@@ -34,7 +34,7 @@ export class ApiKeyGuard implements CanActivate {
             where: { isActive: true, keyHash: this.cryptoService.hash(key) },
         });
 
-        if (requiredScopes.includes(apiKey.scopes as any)) {
+        if (requiredScopes.some((scope) => apiKey.scopes.includes(scope))) {
             this.organizationContextService.set(apiKey.organizationId);
             return true;
         } else {

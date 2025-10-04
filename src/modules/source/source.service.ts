@@ -46,8 +46,10 @@ export class SourceService {
     }
 
     async getDetail(payload: GetDetailSourceDto): Promise<GetDetailSourceResponse> {
+        const organizationId = this.organizationContextService.get();
+
         const source = await this.prismaService.source.findFirstOrThrow({
-            where: { sourceId: payload.sourceId },
+            where: { sourceId: payload.sourceId, organizationId },
             select: { sourceId: true, title: true, rawText: true, type: true, metadata: true },
         });
 
@@ -159,8 +161,10 @@ export class SourceService {
     }
 
     async update(payload: UpdateSourceDto): Promise<UpdateSourceResponse> {
+        const organizationId = this.organizationContextService.get();
+
         const source = await this.prismaService.source.update({
-            where: { sourceId: payload.sourceId },
+            where: { sourceId: payload.sourceId, organizationId },
             data: { title: payload.title },
         });
 
@@ -168,8 +172,10 @@ export class SourceService {
     }
 
     async delete(payload: DeleteSourceDto): Promise<DeleteSourceResponse> {
+        const organizationId = this.organizationContextService.get();
+
         const source = await this.prismaService.source.delete({
-            where: { sourceId: payload.sourceId },
+            where: { sourceId: payload.sourceId, organizationId },
         });
 
         return { sourceId: source.sourceId, timestamp: dayjs().toISOString() };

@@ -14,8 +14,8 @@ export class ApiKeyController {
     @Get()
     @OrganizationRoles("ADMIN")
     @UseGuards(OrganizationRolesGuard)
-    async getAll(@Param("organizationId", ParseIntPipe) organizationId: number) {
-        const res = await this.apiKeyService.getAll({ organizationId });
+    async getAll() {
+        const res = await this.apiKeyService.getAll();
 
         return apiResponse("get all api key successful", res);
     }
@@ -33,8 +33,8 @@ export class ApiKeyController {
     @OrganizationRoles("ADMIN")
     @UseGuards(OrganizationRolesGuard)
     @UsePipes(new ZodValidationPipe(createApiKeyBody))
-    async create(@Param("organizationId", ParseIntPipe) organizationId: number, @Body() body: CreateApiKeyBody) {
-        const res = await this.apiKeyService.create({ ...body, organizationId });
+    async create(@Body() body: CreateApiKeyBody) {
+        const res = await this.apiKeyService.create(body);
 
         return apiResponse("create api key successful", res);
     }

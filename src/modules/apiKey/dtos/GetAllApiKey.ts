@@ -1,5 +1,3 @@
-import { ApiKey, Organization } from "@prisma/client";
-
-export type GetAllApiKeyDto = Pick<Organization, "organizationId">;
+import { ApiKey } from "@prisma/client";
 
 export type GetAllApiKeyResponse = Pick<ApiKey, "apiKeyId" | "name" | "isActive">[];

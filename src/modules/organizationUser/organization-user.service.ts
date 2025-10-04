@@ -125,7 +125,7 @@ export class OrganizationUserService {
         const organizationUser = this.organizationUserContextService.get();
 
         let targetOrganizationUser = await this.prismaService.organizationUser.findFirstOrThrow({
-            where: { organizationUserId: payload.organizationUserId },
+            where: { organizationUserId: payload.organizationUserId, organizationId: organizationUser.organizationId },
         });
 
         if (targetOrganizationUser.organizationUserId == organizationUser.organizationUserId) {
@@ -137,7 +137,7 @@ export class OrganizationUserService {
         }
 
         targetOrganizationUser = await this.prismaService.organizationUser.update({
-            where: { organizationUserId: payload.organizationUserId },
+            where: { organizationUserId: payload.organizationUserId, organizationId: organizationUser.organizationId },
             data: { role: payload.role },
         });
 
@@ -151,7 +151,7 @@ export class OrganizationUserService {
         const organizationUser = this.organizationUserContextService.get();
 
         let targetOrganizationUser = await this.prismaService.organizationUser.findFirstOrThrow({
-            where: { organizationUserId: payload.organizationUserId },
+            where: { organizationUserId: payload.organizationUserId, organizationId: organizationUser.organizationId },
         });
 
         if (targetOrganizationUser.organizationUserId == organizationUser.organizationUserId) {
@@ -163,7 +163,7 @@ export class OrganizationUserService {
         }
 
         targetOrganizationUser = await this.prismaService.organizationUser.delete({
-            where: { organizationUserId: payload.organizationUserId },
+            where: { organizationUserId: payload.organizationUserId, organizationId: organizationUser.organizationId },
         });
 
         return { organizationUserId: targetOrganizationUser.organizationUserId, timestamp: dayjs().toISOString() };

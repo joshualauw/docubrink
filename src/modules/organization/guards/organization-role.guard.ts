@@ -27,10 +27,6 @@ export class OrganizationRolesGuard implements CanActivate {
         const organizationId = parseInt(request.params.organizationId);
         if (!organizationId) throw new BadRequestException("organization id not provided");
 
-        await this.prismaService.organization.findFirstOrThrow({
-            where: { organizationId },
-        });
-
         const organizationUser = await this.prismaService.organizationUser.findFirstOrThrow({
             where: { userId: user.userId, organizationId },
         });
