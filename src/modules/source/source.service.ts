@@ -108,10 +108,17 @@ export class SourceService {
             await this.cacheManager.set(cacheKey, embeddingUsageThisMonth, ttl);
         }
 
+        const estimatedTokenCost = payload.text.length / 4;
+        let totalTokenCost = embeddingUsageThisMonth + estimatedTokenCost;
+
+        if (subscription.plan.embeddingTokenLimit <= totalTokenCost) {
+            throw new BadRequestException("Embedding token limit");
+        }
+
         const cleanedText = this.chunkingService.cleanText(payload.text);
         const result = await this.chunkingService.createChunks(`${cleanedText}`);
 
-        const totalTokenCost = embeddingUsageThisMonth + result.tokenCost;
+        totalTokenCost = embeddingUsageThisMonth + result.tokenCost;
 
         if (subscription.plan.embeddingTokenLimit <= totalTokenCost) {
             throw new BadRequestException("Embedding token limit");
@@ -226,6 +233,13 @@ export class SourceService {
             await this.cacheManager.set(cacheKey, queryUsageThisMonth, ttl);
         }
 
+        const estimatedTokenCost = payload.query.length / 4;
+        let totalTokenCost = queryUsageThisMonth + estimatedTokenCost;
+
+        if (subscription.plan.queryTokenLimit <= totalTokenCost) {
+            throw new BadRequestException("Query token limit");
+        }
+
         const sources = await this.prismaService.source.findMany({
             where: {
                 organizationId,
@@ -242,7 +256,7 @@ export class SourceService {
         );
 
         const result = await this.retrievalService.generateAnswer(payload.query, chunks);
-        const totalTokenCost = queryUsageThisMonth + result.tokenCost;
+        totalTokenCost = queryUsageThisMonth + result.tokenCost;
 
         if (subscription.plan.queryTokenLimit <= totalTokenCost) {
             throw new BadRequestException("Query token limit");
