@@ -30,18 +30,15 @@ export class ApiKeyGuard implements CanActivate {
         const key = request.headers["x-api-key"] as string;
         if (!key) throw new BadRequestException("API Key is not provided");
 
-        const apiKey = await this.prismaService.apiKey.findFirst({
-            where: {
-                isActive: true,
-                keyHash: this.cryptoService.hash(key),
-                scopes: { hasSome: requiredScopes },
-            },
+        const apiKey = await this.prismaService.apiKey.findFirstOrThrow({
+            where: { isActive: true, keyHash: this.cryptoService.hash(key) },
         });
 
-        if (!apiKey) throw new ForbiddenException("Invalid API Key");
-
-        this.organizationContextService.set(apiKey.organizationId);
-
-        return true;
+        if (requiredScopes.includes(apiKey.scopes as any)) {
+            this.organizationContextService.set(apiKey.organizationId);
+            return true;
+        } else {
+            throw new ForbiddenException("API Key doesn't have permission to perform this action");
+        }
     }
 }

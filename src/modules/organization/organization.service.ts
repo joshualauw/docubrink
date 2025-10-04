@@ -37,7 +37,7 @@ export class OrganizationService {
         const organizationCountByUser = await this.prismaService.organizationUser.count({
             where: {
                 userId: organizationUser.userId,
-                role: "ADMIN",
+                role: "OWNER",
             },
         });
 
@@ -60,7 +60,7 @@ export class OrganizationService {
                     organizationUser: {
                         create: {
                             userId: organizationUser.userId,
-                            role: "ADMIN",
+                            role: "OWNER",
                         },
                     },
                 },

@@ -31,21 +31,21 @@ export class OrganizationRolesGuard implements CanActivate {
             where: { organizationId },
         });
 
-        const roleUser = await this.prismaService.organizationUser.findFirst({
-            where: { userId: user.userId, organizationId, role: { in: requiredRoles } },
+        const organizationUser = await this.prismaService.organizationUser.findFirstOrThrow({
+            where: { userId: user.userId, organizationId },
         });
 
-        if (!roleUser) {
+        if (requiredRoles.includes(organizationUser.role) || organizationUser.role == "OWNER") {
+            this.organizationUserContextService.set({
+                organizationUserId: organizationUser.organizationUserId,
+                organizationId,
+                userId: user.userId,
+                role: organizationUser.role,
+            });
+
+            return true;
+        } else {
             throw new ForbiddenException("User doesn't have permission to perform this action");
         }
-
-        this.organizationUserContextService.set({
-            organizationUserId: roleUser.organizationUserId,
-            organizationId,
-            userId: user.userId,
-            role: roleUser.role,
-        });
-
-        return true;
     }
 }

@@ -13,6 +13,11 @@ import {
     CreateOrganizationInviteResponse,
 } from "src/modules/organizationUser/dtos/CreateOrganizationInvite";
 import { genRandomAlphanum } from "src/utils/common";
+import { UpdateOrganizationUserDto, UpdateOrganizationUserResponse } from "./dtos/UpdateOrganizationUser";
+import {
+    RemoveOrganizationUserDto,
+    RemoveOrganizationUserResponse,
+} from "src/modules/organizationUser/dtos/RemoveOrganizationUser";
 
 @Injectable()
 export class OrganizationUserService {
@@ -114,5 +119,53 @@ export class OrganizationUserService {
         }
 
         return null;
+    }
+
+    async update(payload: UpdateOrganizationUserDto): Promise<UpdateOrganizationUserResponse> {
+        const organizationUser = this.organizationUserContextService.get();
+
+        let targetOrganizationUser = await this.prismaService.organizationUser.findFirstOrThrow({
+            where: { organizationUserId: payload.organizationUserId },
+        });
+
+        if (targetOrganizationUser.organizationUserId == organizationUser.organizationUserId) {
+            throw new ForbiddenException("Cannot change self role");
+        }
+
+        if (targetOrganizationUser.role == "ADMIN" && organizationUser.role != "OWNER") {
+            throw new ForbiddenException("Cannot change other admin role");
+        }
+
+        targetOrganizationUser = await this.prismaService.organizationUser.update({
+            where: { organizationUserId: payload.organizationUserId },
+            data: { role: payload.role },
+        });
+
+        return {
+            organizationUserId: targetOrganizationUser.organizationUserId,
+            updatedAt: targetOrganizationUser.updatedAt.toISOString(),
+        };
+    }
+
+    async remove(payload: RemoveOrganizationUserDto): Promise<RemoveOrganizationUserResponse> {
+        const organizationUser = this.organizationUserContextService.get();
+
+        let targetOrganizationUser = await this.prismaService.organizationUser.findFirstOrThrow({
+            where: { organizationUserId: payload.organizationUserId },
+        });
+
+        if (targetOrganizationUser.organizationUserId == organizationUser.organizationUserId) {
+            throw new ForbiddenException("Cannot remove self");
+        }
+
+        if (targetOrganizationUser.role != "MEMBER" && organizationUser.role != "OWNER") {
+            throw new ForbiddenException("Can only remove member role");
+        }
+
+        targetOrganizationUser = await this.prismaService.organizationUser.delete({
+            where: { organizationUserId: payload.organizationUserId },
+        });
+
+        return { organizationUserId: targetOrganizationUser.organizationUserId, timestamp: dayjs().toISOString() };
     }
 }
