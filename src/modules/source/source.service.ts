@@ -74,7 +74,9 @@ export class SourceService {
             throw new BadRequestException("Maximum sources limit");
         }
 
-        const cacheKey = `organization-${organizationId}:ai-embedding:${dayjs().format("MM-YYYY")}`;
+        const now = dayjs();
+
+        const cacheKey = `organization-${organizationId}:ai-embedding:${now.format("MM-YYYY")}`;
         const cacheValue = await this.cacheManager.get<number>(cacheKey);
 
         let embeddingUsageThisMonth = 0;
@@ -82,8 +84,8 @@ export class SourceService {
         if (cacheValue) {
             embeddingUsageThisMonth = cacheValue;
         } else {
-            const startDate = dayjs().startOf("month").toDate();
-            const endDate = dayjs().endOf("month").toDate();
+            const startDate = now.startOf("month").toDate();
+            const endDate = now.endOf("month").toDate();
 
             const embeddingUsage = await this.prismaService.aiEmbedding.aggregate({
                 where: {
@@ -100,7 +102,6 @@ export class SourceService {
 
             embeddingUsageThisMonth = embeddingUsage._sum.tokensUsed ?? 0;
 
-            const now = dayjs();
             const firstDayNextMonth = now.add(1, "month").startOf("month");
             const ttl = firstDayNextMonth.diff(now, "second");
 
@@ -191,7 +192,9 @@ export class SourceService {
             },
         });
 
-        const cacheKey = `organization-${organizationId}:ai-query:${dayjs().format("MM-YYYY")}`;
+        const now = dayjs();
+
+        const cacheKey = `organization-${organizationId}:ai-query:${now.format("MM-YYYY")}`;
         const cacheValue = await this.cacheManager.get<number>(cacheKey);
 
         let queryUsageThisMonth = 0;
@@ -199,8 +202,8 @@ export class SourceService {
         if (cacheValue) {
             queryUsageThisMonth = cacheValue;
         } else {
-            const startDate = dayjs().startOf("month").toDate();
-            const endDate = dayjs().endOf("month").toDate();
+            const startDate = now.startOf("month").toDate();
+            const endDate = now.endOf("month").toDate();
 
             const queryUsage = await this.prismaService.aiQuery.aggregate({
                 where: {
@@ -217,7 +220,6 @@ export class SourceService {
 
             queryUsageThisMonth = queryUsage._sum.tokensUsed ?? 0;
 
-            const now = dayjs();
             const firstDayNextMonth = now.add(1, "month").startOf("month");
             const ttl = firstDayNextMonth.diff(now, "second");
 
