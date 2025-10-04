@@ -18,6 +18,7 @@ import {
     RemoveOrganizationUserDto,
     RemoveOrganizationUserResponse,
 } from "src/modules/organizationUser/dtos/RemoveOrganizationUser";
+import { GetAllOrganizationUserResponse } from "src/modules/organizationUser/dtos/GetAllOrganizationUser";
 
 @Injectable()
 export class OrganizationUserService {
@@ -27,6 +28,22 @@ export class OrganizationUserService {
         private userContextService: UserContextService,
         private emailService: EmailService,
     ) {}
+
+    async getAll(): Promise<GetAllOrganizationUserResponse> {
+        const organizationUser = this.organizationUserContextService.get();
+
+        const organizationUsers = await this.prismaService.organizationUser.findMany({
+            where: { organizationId: organizationUser.organizationId },
+            select: { organizationUserId: true, role: true, createdAt: true, user: { select: { username: true } } },
+        });
+
+        return organizationUsers.map((o) => ({
+            organizationUserId: o.organizationUserId,
+            role: o.role,
+            username: o.user.username,
+            joinedAt: o.createdAt.toISOString(),
+        }));
+    }
 
     async invite(payload: CreateOrganizationInviteDto): Promise<CreateOrganizationInviteResponse> {
         const user = this.userContextService.get();

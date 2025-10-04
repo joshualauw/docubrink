@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, ParseIntPipe, Post, Put, UseGuards, UsePipes } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, UseGuards, UsePipes } from "@nestjs/common";
 import { ZodValidationPipe } from "src/common/pipes/zod-validation.pipe";
 import { OrganizationRoles } from "src/modules/organization/decorators/organization-role.decorator";
 import { OrganizationRolesGuard } from "src/modules/organization/guards/organization-role.guard";
@@ -21,10 +21,20 @@ import {
     UpdateOrganizationUserResponse,
 } from "./dtos/UpdateOrganizationUser";
 import { RemoveOrganizationUserResponse } from "src/modules/organizationUser/dtos/RemoveOrganizationUser";
+import { GetAllOrganizationUserResponse } from "src/modules/organizationUser/dtos/GetAllOrganizationUser";
 
 @Controller("/api/:organizationId/organization-user")
 export class OrganizationUserController {
     constructor(private organizationUserService: OrganizationUserService) {}
+
+    @Get()
+    @OrganizationRoles("ADMIN", "MEMBER")
+    @UseGuards(OrganizationRolesGuard)
+    async getAll(): Promise<ApiResponse<GetAllOrganizationUserResponse>> {
+        const res = await this.organizationUserService.getAll();
+
+        return apiResponse("get all organization user successful", res);
+    }
 
     @Post("invite")
     @OrganizationRoles("ADMIN")
