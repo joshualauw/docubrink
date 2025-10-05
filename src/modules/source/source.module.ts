@@ -13,6 +13,7 @@ import { SourceController } from "src/modules/source/source.controller";
 import { SourceService } from "src/modules/source/source.service";
 import { QueueKey } from "src/types/QueueKey";
 import { OrganizationModule } from "src/modules/organization/organization.module";
+import { AiUsageService } from "src/modules/source/services/ai-usage.service";
 
 @Module({
     imports: [
@@ -29,6 +30,6 @@ import { OrganizationModule } from "src/modules/organization/organization.module
         OrganizationModule,
     ],
     controllers: [SourceController],
-    providers: [SourceService, SourceProcessor, ChunkingService, RetrievalService],
+    providers: [SourceService, SourceProcessor, ChunkingService, RetrievalService, AiUsageService],
 })
 export class SourceModule {}

@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "nestjs-prisma";
 import { CreateSourceDto, CreateSourceResponse } from "src/modules/source/dtos/CreateSource";
 import { UpdateSourceDto, UpdateSourceResponse } from "src/modules/source/dtos/UpdateSource";
@@ -7,10 +7,14 @@ import { DeleteSourceDto, DeleteSourceResponse } from "src/modules/source/dtos/D
 import { AskSourceDto, AskSourceResponse } from "src/modules/source/dtos/AskSource";
 import { RetrievalService } from "src/modules/source/services/retrieval.service";
 import { GetAllSourceResponse } from "src/modules/source/dtos/GetAllSource";
-import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager";
 import { ChunkingService } from "src/modules/source/services/chunking.service";
 import { GetDetailSourceDto, GetDetailSourceResponse } from "src/modules/source/dtos/GetDetailSource";
 import { OrganizationContextService } from "src/modules/organization/services/organization-context.service";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { QueueKey } from "src/types/QueueKey";
+import { AiUsageService } from "src/modules/source/services/ai-usage.service";
+import { EmbeddingJobDto } from "src/modules/source/dtos/EmbeddingJob";
 
 @Injectable()
 export class SourceService {
@@ -19,7 +23,8 @@ export class SourceService {
         private retrievalService: RetrievalService,
         private chunkingService: ChunkingService,
         private organizationContextService: OrganizationContextService,
-        @Inject(CACHE_MANAGER) private cacheManager: Cache,
+        private aiUsageService: AiUsageService,
+        @InjectQueue(QueueKey.SOURCE) private queue: Queue,
     ) {}
 
     async getAll(): Promise<GetAllSourceResponse> {
@@ -74,96 +79,34 @@ export class SourceService {
             throw new BadRequestException("Maximum sources limit");
         }
 
-        const now = dayjs();
-
-        const cacheKey = `organization-${organizationId}:ai-embedding:${now.format("MM-YYYY")}`;
-        const cacheValue = await this.cacheManager.get<number>(cacheKey);
-
-        let embeddingUsageThisMonth = 0;
-
-        if (cacheValue) {
-            embeddingUsageThisMonth = cacheValue;
-        } else {
-            const startDate = now.startOf("month").toDate();
-            const endDate = now.endOf("month").toDate();
-
-            const embeddingUsage = await this.prismaService.aiEmbedding.aggregate({
-                where: {
-                    organizationId,
-                    createdAt: {
-                        gte: startDate,
-                        lte: endDate,
-                    },
-                },
-                _sum: {
-                    tokensUsed: true,
-                },
-            });
-
-            embeddingUsageThisMonth = embeddingUsage._sum.tokensUsed ?? 0;
-
-            const firstDayNextMonth = now.add(1, "month").startOf("month");
-            const ttl = firstDayNextMonth.diff(now, "second");
-
-            await this.cacheManager.set(cacheKey, embeddingUsageThisMonth, ttl);
-        }
-
-        const estimatedTokenCost = payload.text.length / 4;
-        let totalTokenCost = embeddingUsageThisMonth + estimatedTokenCost;
-
-        if (subscription.plan.embeddingTokenLimit <= totalTokenCost) {
-            throw new BadRequestException("Embedding token limit");
-        }
-
-        const cleanedText = this.chunkingService.cleanText(payload.text);
-        const result = await this.chunkingService.createChunks(`${cleanedText}`);
-
-        totalTokenCost = embeddingUsageThisMonth + result.tokenCost;
-
-        if (subscription.plan.embeddingTokenLimit <= totalTokenCost) {
-            throw new BadRequestException("Embedding token limit");
-        }
-
-        const tempValues: any[] = [];
-        const placeholders: string[] = [];
-
-        const source = await this.prismaService.$transaction(async (tx) => {
-            const source = await this.prismaService.source.create({
-                data: {
-                    organizationId,
-                    title: payload.title,
-                    rawText: payload.text,
-                    type: payload.type,
-                    status: "DONE",
-                    metadata: payload.metadata,
-                },
-            });
-
-            for (let i = 0; i < result.chunks.length; i++) {
-                const offset = i * 3;
-                tempValues.push(source.sourceId, result.chunks[i].content, result.chunks[i].embedding);
-                placeholders.push(`($${offset + 1}, $${offset + 2}, $${offset + 3})`);
-            }
-
-            const query = `
-                INSERT INTO public."SourceChunk" ("sourceId", "chunkText", embedding)
-                VALUES ${placeholders.join(", ")}
-            `;
-
-            await tx.$executeRawUnsafe(query, ...tempValues);
-
-            return source;
+        const embeddingUsageThisMonth = await this.aiUsageService.getAiEmbeddingMonthlyUsage({
+            organizationId,
         });
 
-        await this.prismaService.aiEmbedding.create({
+        if (subscription.plan.embeddingTokenLimit <= embeddingUsageThisMonth) {
+            throw new BadRequestException("Embedding token limit");
+        }
+
+        const source = await this.prismaService.source.create({
             data: {
-                sourceId: source.sourceId,
-                organizationId: source.organizationId,
-                tokensUsed: result.tokenCost,
+                organizationId,
+                title: payload.title,
+                rawText: payload.text,
+                type: "MANUAL",
+                status: "PROCESSING",
+                metadata: payload.metadata,
             },
         });
 
-        await this.cacheManager.set(cacheKey, totalTokenCost);
+        const jobData: EmbeddingJobDto = { sourceId: source.sourceId, embeddingUsageThisMonth };
+
+        await this.queue.add("create-source", jobData, {
+            attempts: 3,
+            backoff: {
+                type: "fixed",
+                delay: 5000,
+            },
+        });
 
         return { sourceId: source.sourceId, createdAt: source.createdAt.toISOString() };
     }
@@ -199,44 +142,9 @@ export class SourceService {
             },
         });
 
-        const now = dayjs();
+        const queryUsageThisMonth = await this.aiUsageService.getAiQueryMonthlyUsage({ organizationId });
 
-        const cacheKey = `organization-${organizationId}:ai-query:${now.format("MM-YYYY")}`;
-        const cacheValue = await this.cacheManager.get<number>(cacheKey);
-
-        let queryUsageThisMonth = 0;
-
-        if (cacheValue) {
-            queryUsageThisMonth = cacheValue;
-        } else {
-            const startDate = now.startOf("month").toDate();
-            const endDate = now.endOf("month").toDate();
-
-            const queryUsage = await this.prismaService.aiQuery.aggregate({
-                where: {
-                    organizationId,
-                    createdAt: {
-                        gte: startDate,
-                        lte: endDate,
-                    },
-                },
-                _sum: {
-                    tokensUsed: true,
-                },
-            });
-
-            queryUsageThisMonth = queryUsage._sum.tokensUsed ?? 0;
-
-            const firstDayNextMonth = now.add(1, "month").startOf("month");
-            const ttl = firstDayNextMonth.diff(now, "second");
-
-            await this.cacheManager.set(cacheKey, queryUsageThisMonth, ttl);
-        }
-
-        const estimatedTokenCost = payload.query.length / 4;
-        let totalTokenCost = queryUsageThisMonth + estimatedTokenCost;
-
-        if (subscription.plan.queryTokenLimit <= totalTokenCost) {
+        if (subscription.plan.queryTokenLimit <= queryUsageThisMonth) {
             throw new BadRequestException("Query token limit");
         }
 
@@ -256,11 +164,6 @@ export class SourceService {
         );
 
         const result = await this.retrievalService.generateAnswer(payload.query, chunks);
-        totalTokenCost = queryUsageThisMonth + result.tokenCost;
-
-        if (subscription.plan.queryTokenLimit <= totalTokenCost) {
-            throw new BadRequestException("Query token limit");
-        }
 
         await this.prismaService.aiQuery.create({
             data: {
@@ -271,7 +174,9 @@ export class SourceService {
             },
         });
 
-        await this.cacheManager.set(cacheKey, totalTokenCost);
+        const totalTokenCost = queryUsageThisMonth + result.tokenCost;
+
+        await this.aiUsageService.updateAiQueryMonthlyUsage({ organizationId, totalTokenCost });
 
         return { answer: result.output, timestamp: dayjs().toISOString() };
     }

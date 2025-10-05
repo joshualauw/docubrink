@@ -2,6 +2,8 @@ import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Logger } from "@nestjs/common";
 import { Job } from "bullmq";
 import { PrismaService } from "nestjs-prisma";
+import { EmbeddingJobDto } from "src/modules/source/dtos/EmbeddingJob";
+import { AiUsageService } from "src/modules/source/services/ai-usage.service";
 import { ChunkingService } from "src/modules/source/services/chunking.service";
 import { QueueKey } from "src/types/QueueKey";
 
@@ -12,26 +14,27 @@ export class SourceProcessor extends WorkerHost {
     constructor(
         private prismaService: PrismaService,
         private chunkingService: ChunkingService,
+        private aiUsageService: AiUsageService,
     ) {
         super();
     }
 
-    async process(job: Job<number>): Promise<void> {
+    async process(job: Job<EmbeddingJobDto>): Promise<void> {
         try {
             const source = await this.prismaService.source.findFirstOrThrow({
-                where: { sourceId: job.data },
+                where: { sourceId: job.data.sourceId },
             });
 
             const cleanedText = this.chunkingService.cleanText(source.rawText);
-            const { chunks, tokenCost } = await this.chunkingService.createChunks(`${cleanedText}`);
+            const result = await this.chunkingService.createChunks(cleanedText);
 
             const tempValues: any[] = [];
             const placeholders: string[] = [];
 
             await this.prismaService.$transaction(async (tx) => {
-                for (let i = 0; i < chunks.length; i++) {
+                for (let i = 0; i < result.chunks.length; i++) {
                     const offset = i * 3;
-                    tempValues.push(source.sourceId, chunks[i].content, chunks[i].embedding);
+                    tempValues.push(source.sourceId, result.chunks[i].content, result.chunks[i].embedding);
                     placeholders.push(`($${offset + 1}, $${offset + 2}, $${offset + 3})`);
                 }
 
@@ -43,23 +46,30 @@ export class SourceProcessor extends WorkerHost {
                 await tx.$executeRawUnsafe(query, ...tempValues);
 
                 await tx.source.update({
-                    where: { sourceId: job.data },
+                    where: { sourceId: job.data.sourceId },
                     data: { status: "DONE" },
                 });
 
                 await tx.aiEmbedding.create({
                     data: {
-                        sourceId: job.data,
+                        sourceId: job.data.sourceId,
                         organizationId: source.organizationId,
-                        tokensUsed: tokenCost,
+                        tokensUsed: result.tokenCost,
                     },
                 });
+            });
+
+            const totalTokenCost = job.data.embeddingUsageThisMonth + result.tokenCost;
+
+            await this.aiUsageService.updateAiEmbeddingMonthlyUsage({
+                organizationId: source.organizationId,
+                totalTokenCost,
             });
         } catch (e: any) {
             this.logger.error(`job ${job.id} failed`, e.message);
 
             await this.prismaService.source.update({
-                where: { sourceId: job.data },
+                where: { sourceId: job.data.sourceId },
                 data: { status: "FAILED" },
             });
         }
