@@ -14,10 +14,13 @@ import { SourceService } from "src/modules/source/source.service";
 import { QueueKey } from "src/types/QueueKey";
 import { OrganizationModule } from "src/modules/organization/organization.module";
 import { AiUsageService } from "src/modules/source/services/ai-usage.service";
+import FileParserService from "src/modules/source/services/file-parser.service";
+import { StorageModule } from "src/core/storage/storage.module";
 
 @Module({
     imports: [
         SecurityModule,
+        StorageModule,
         LlmModule,
         BullModule.registerQueue({ name: QueueKey.SOURCE }),
         CacheModule.registerAsync({
@@ -30,6 +33,6 @@ import { AiUsageService } from "src/modules/source/services/ai-usage.service";
         OrganizationModule,
     ],
     controllers: [SourceController],
-    providers: [SourceService, SourceProcessor, ChunkingService, RetrievalService, AiUsageService],
+    providers: [SourceService, SourceProcessor, ChunkingService, RetrievalService, AiUsageService, FileParserService],
 })
 export class SourceModule {}

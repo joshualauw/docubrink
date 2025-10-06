@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -25,8 +26,7 @@ import { updateSourceBody, UpdateSourceBody, UpdateSourceResponse } from "src/mo
 import { SourceService } from "src/modules/source/source.service";
 import { ApiResponse } from "src/types/ApiResponse";
 import { apiResponse } from "src/utils/api";
-import { uploadSourceBody, UploadSourceBody, UploadSourceResponse } from "./dtos/UploadSource";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { SourceFileInterceptor } from "src/modules/source/interceptors/source-file.interceptor";
 
 @Controller("/api/source")
 export class SourceController {
@@ -67,13 +67,17 @@ export class SourceController {
     @Post("upload")
     @ApiKeyScopes("source.write")
     @UseGuards(ApiKeyGuard)
-    @UsePipes(new ZodValidationPipe(uploadSourceBody))
-    @UseInterceptors(FileInterceptor("file"))
+    @UsePipes(new ZodValidationPipe(createSourceBody))
+    @UseInterceptors(SourceFileInterceptor)
     async upload(
-        @Body() body: UploadSourceBody,
+        @Body() body: CreateSourceBody,
         @UploadedFile() file: Express.Multer.File,
-    ): Promise<ApiResponse<UploadSourceResponse>> {
-        return apiResponse("source uploaded");
+    ): Promise<ApiResponse<CreateSourceResponse>> {
+        if (!file) throw new BadRequestException("file is not provided");
+
+        const res = await this.sourceService.create({ ...body, file });
+
+        return apiResponse("source uploaded", res);
     }
 
     @Public()

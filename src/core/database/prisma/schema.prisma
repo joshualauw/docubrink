@@ -139,6 +139,7 @@ model Source {
     rawText        String
     type           SourceType
     status         SourceStatus
+    fileUrl        String?
     metadata       Json?
     createdAt      DateTime     @default(now())
     updatedAt      DateTime     @updatedAt()

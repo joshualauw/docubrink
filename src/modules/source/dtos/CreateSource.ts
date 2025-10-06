@@ -3,11 +3,14 @@ import z from "zod";
 
 export const createSourceBody = z.object({
     title: z.string().min(1, "title is required"),
-    text: z.string().min(1, "text is required"),
+    text: z.string().min(1, "text is required").optional(),
+    type: z.enum(["MANUAL", "UPLOAD"]),
     metadata: z.any().optional(),
 });
 
-export type CreateSourceBody = z.infer<typeof createSourceBody>;
+export type CreateSourceBody = z.infer<typeof createSourceBody> & {
+    file?: Express.Multer.File;
+};
 
 export type CreateSourceDto = CreateSourceBody;
 

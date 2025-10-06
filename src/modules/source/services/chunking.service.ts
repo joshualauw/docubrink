@@ -14,7 +14,7 @@ export class ChunkingService {
         return rawText
             .replace(/[ \t]+/g, " ") // normalize spaces
             .replace(/\r\n/g, "\n") // unify line breaks
-            .replace(/\n{3,}/g, "\n\n") // max 2 newlines (preserve paragraph)
+            .replace(/\n{2,}/g, "\n\n") // max 1 newline (preserve paragraph)
             .replace(/\.{2,}/g, ".") // remove extra dots
             .replace(/[^\x00-\x7F]+/g, "") // optional: remove non-ASCII
             .replace(/[*_]{1,2}([^*_]+)[*_]{1,2}/g, "$1") // remove **bold**, *italic*, etc

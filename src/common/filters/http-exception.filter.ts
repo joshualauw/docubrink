@@ -7,7 +7,7 @@ import { errorResponse } from "src/utils/api";
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-    private readonly logger = new Logger(HttpExceptionFilter.name)
+    private readonly logger = new Logger(HttpExceptionFilter.name);
 
     catch(exception: unknown, host: ArgumentsHost) {
         const ctx = host.switchToHttp();

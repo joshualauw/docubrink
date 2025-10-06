@@ -7,13 +7,14 @@ import { DeleteSourceDto, DeleteSourceResponse } from "src/modules/source/dtos/D
 import { AskSourceDto, AskSourceResponse } from "src/modules/source/dtos/AskSource";
 import { RetrievalService } from "src/modules/source/services/retrieval.service";
 import { GetAllSourceResponse } from "src/modules/source/dtos/GetAllSource";
-import { ChunkingService } from "src/modules/source/services/chunking.service";
 import { GetDetailSourceDto, GetDetailSourceResponse } from "src/modules/source/dtos/GetDetailSource";
 import { OrganizationContextService } from "src/modules/organization/services/organization-context.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { QueueKey } from "src/types/QueueKey";
 import { AiUsageService } from "src/modules/source/services/ai-usage.service";
+import { LocalStorageService } from "src/core/storage/local/local-storage.service";
+import FileParserService from "src/modules/source/services/file-parser.service";
 import { EmbeddingJobDto } from "src/modules/source/dtos/EmbeddingJob";
 
 @Injectable()
@@ -21,9 +22,10 @@ export class SourceService {
     constructor(
         private prismaService: PrismaService,
         private retrievalService: RetrievalService,
-        private chunkingService: ChunkingService,
         private organizationContextService: OrganizationContextService,
         private aiUsageService: AiUsageService,
+        private localStorageService: LocalStorageService,
+        private fileParserService: FileParserService,
         @InjectQueue(QueueKey.SOURCE) private queue: Queue,
     ) {}
 
@@ -53,12 +55,10 @@ export class SourceService {
     async getDetail(payload: GetDetailSourceDto): Promise<GetDetailSourceResponse> {
         const organizationId = this.organizationContextService.get();
 
-        const source = await this.prismaService.source.findFirstOrThrow({
+        return this.prismaService.source.findFirstOrThrow({
             where: { sourceId: payload.sourceId, organizationId },
             select: { sourceId: true, title: true, rawText: true, type: true, metadata: true },
         });
-
-        return source;
     }
 
     async create(payload: CreateSourceDto): Promise<CreateSourceResponse> {
@@ -87,12 +87,23 @@ export class SourceService {
             throw new BadRequestException("Embedding token limit");
         }
 
+        let rawText = "";
+        let fileUrl: string | null = null;
+
+        if (payload.text && payload.type == "MANUAL") {
+            rawText = payload.text;
+        } else if (payload.file && payload.type == "UPLOAD") {
+            rawText = await this.fileParserService.parse(payload.file);
+            fileUrl = await this.localStorageService.writeFile(payload.file);
+        }
+
         const source = await this.prismaService.source.create({
             data: {
                 organizationId,
                 title: payload.title,
-                rawText: payload.text,
-                type: "MANUAL",
+                rawText,
+                fileUrl,
+                type: payload.type,
                 status: "PROCESSING",
                 metadata: payload.metadata,
             },
