@@ -31,11 +31,11 @@ It leverages **NestJS**, **LangChain**, and **OpenAI** to process, embed, and qu
 
 🧩 To-Do
 
-[V] API Key Management
-[V] Organization User & Role Access
-[V] Implement RAG Pipeline
-[V] Manage Subscription, Billing, and Payments
-[ ] Implement CI/CD pipeline (GitHub Actions → AWS)
-[ ] Add API rate limiting and usage analytics
-[ ] Create minimal web dashboard using NuxtJS
-[ ] Add PDF / DOCX ingestion service
+- [V] API Key Management
+- [V] Organization User & Role Access
+- [V] Implement RAG Pipeline
+- [V] Manage Subscription, Billing, and Payments
+- [ ] Implement CI/CD pipeline (GitHub Actions → AWS)
+- [ ] Add API rate limiting and usage analytics
+- [ ] Create minimal web dashboard using NuxtJS
+- [ ] Add PDF / DOCX ingestion service
