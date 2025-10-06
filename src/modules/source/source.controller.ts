@@ -60,7 +60,7 @@ export class SourceController {
     async create(@Body() body: CreateSourceBody): Promise<ApiResponse<CreateSourceResponse>> {
         const res = await this.sourceService.create(body);
 
-        return apiResponse("source created", res);
+        return apiResponse("create source successful", res);
     }
 
     @Public()
@@ -77,7 +77,7 @@ export class SourceController {
 
         const res = await this.sourceService.create({ ...body, file });
 
-        return apiResponse("source uploaded", res);
+        return apiResponse("upload source successful", res);
     }
 
     @Public()
@@ -88,7 +88,7 @@ export class SourceController {
     async ask(@Body() body: AskSourceBody): Promise<ApiResponse<AskSourceResponse>> {
         const res = await this.sourceService.ask(body);
 
-        return apiResponse("ask successful", res);
+        return apiResponse("ask source successful", res);
     }
 
     @Public()
@@ -102,7 +102,7 @@ export class SourceController {
     ): Promise<ApiResponse<UpdateSourceResponse>> {
         const res = await this.sourceService.update({ ...body, sourceId });
 
-        return apiResponse("source updated", res);
+        return apiResponse("update source successful", res);
     }
 
     @Public()
@@ -112,6 +112,6 @@ export class SourceController {
     async delete(@Param("sourceId", ParseIntPipe) sourceId: number): Promise<ApiResponse<DeleteSourceResponse>> {
         const res = await this.sourceService.delete({ sourceId });
 
-        return apiResponse("source deleted", res);
+        return apiResponse("delete source successful", res);
     }
 }
