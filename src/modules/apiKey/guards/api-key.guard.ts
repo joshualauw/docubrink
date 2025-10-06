@@ -15,17 +15,17 @@ export class ApiKeyGuard implements CanActivate {
         private organizationContextService: OrganizationContextService,
     ) {}
 
-    async canActivate(ctx: ExecutionContext): Promise<boolean> {
+    async canActivate(context: ExecutionContext): Promise<boolean> {
         const requiredScopes = this.reflector.getAllAndOverride<ApiKeyScope[]>("scopes", [
-            ctx.getHandler(),
-            ctx.getClass(),
+            context.getHandler(),
+            context.getClass(),
         ]);
 
         if (!requiredScopes) {
             return true;
         }
 
-        const request = ctx.switchToHttp().getRequest<Request>();
+        const request = context.switchToHttp().getRequest<Request>();
 
         const key = request.headers["x-api-key"] as string;
         if (!key) throw new BadRequestException("API Key is not provided");

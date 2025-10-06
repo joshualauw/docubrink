@@ -4,7 +4,6 @@ import { PrismaService } from "nestjs-prisma";
 import { CreateApiKeyDto, CreateApiKeyResponse } from "src/modules/apiKey/dtos/CreateApiKey";
 import { DeleteApiKeyDto, DeleteApiKeyResponse } from "src/modules/apiKey/dtos/DeleteApiKey";
 import { UpdateApiKeyDto, UpdateApiKeyResponse } from "src/modules/apiKey/dtos/UpdateApiKey";
-import { genRandomAlphanum } from "src/utils/common";
 import { GetAllApiKeyResponse } from "src/modules/apiKey/dtos/GetAllApiKey";
 import { GetDetailApiKeyDto, GetDetailApiKeyResponse } from "src/modules/apiKey/dtos/GetDetailApiKey";
 import { CryptoService } from "src/core/security/crypto/crypto.service";
@@ -21,28 +20,24 @@ export class ApiKeyService {
     async getAll(): Promise<GetAllApiKeyResponse> {
         const organizationUser = this.organizationUserContextService.get();
 
-        const apiKeys = await this.prismaService.apiKey.findMany({
+        return this.prismaService.apiKey.findMany({
             where: { organizationId: organizationUser.organizationId },
             select: { apiKeyId: true, name: true, isActive: true },
         });
-
-        return apiKeys;
     }
 
     async getDetail(payload: GetDetailApiKeyDto): Promise<GetDetailApiKeyResponse> {
         const organizationUser = this.organizationUserContextService.get();
 
-        const apiKey = await this.prismaService.apiKey.findFirstOrThrow({
+        return this.prismaService.apiKey.findFirstOrThrow({
             where: { apiKeyId: payload.apiKeyId, organizationId: organizationUser.organizationId },
             select: { apiKeyId: true, name: true, scopes: true, isActive: true },
         });
-
-        return apiKey;
     }
 
     async create(payload: CreateApiKeyDto): Promise<CreateApiKeyResponse> {
         const organizationUser = this.organizationUserContextService.get();
-        const generatedKey = "sk_" + genRandomAlphanum(64);
+        const generatedKey = "sk_" + this.cryptoService.generateKey();
 
         const apiKey = await this.prismaService.apiKey.create({
             data: {

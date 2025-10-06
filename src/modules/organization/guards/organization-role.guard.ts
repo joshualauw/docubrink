@@ -14,14 +14,17 @@ export class OrganizationRolesGuard implements CanActivate {
         private organizationUserContextService: OrganizationUserContextService,
     ) {}
 
-    async canActivate(ctx: ExecutionContext): Promise<boolean> {
-        const requiredRoles = this.reflector.getAllAndOverride<Role[]>("roles", [ctx.getHandler(), ctx.getClass()]);
+    async canActivate(context: ExecutionContext): Promise<boolean> {
+        const requiredRoles = this.reflector.getAllAndOverride<Role[]>("roles", [
+            context.getHandler(),
+            context.getClass(),
+        ]);
 
         if (!requiredRoles) {
             return true;
         }
 
-        const request = ctx.switchToHttp().getRequest<Request>();
+        const request = context.switchToHttp().getRequest<Request>();
         const user = request.user as UserJwtPayload;
 
         const organizationId = parseInt(request.params.organizationId);

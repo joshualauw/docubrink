@@ -7,6 +7,7 @@ import { UserJwtPayload } from "src/types/UserJwtPayload";
 import { UserContextService } from "src/modules/auth/services/user-context.service";
 import { ContextIdFactory, ModuleRef } from "@nestjs/core";
 import { Request } from "express";
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
     constructor(

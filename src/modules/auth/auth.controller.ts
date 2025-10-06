@@ -6,6 +6,8 @@ import { LoginBody, loginBody, LoginResponse } from "src/modules/auth/dtos/Login
 import { RegisterBody, registerBody, RegisterResponse } from "src/modules/auth/dtos/Register";
 import { ApiResponse } from "src/types/ApiResponse";
 import { apiResponse } from "src/utils/api";
+import { RefreshTokenBody, refreshTokenBody, RefreshTokenResponse } from "src/modules/auth/dtos/RefreshToken";
+import { LogoutBody, logoutBody, LogoutResponse } from "src/modules/auth/dtos/Logout";
 
 @Controller("/api/auth")
 export class AuthController {
@@ -17,7 +19,7 @@ export class AuthController {
     async register(@Body() body: RegisterBody): Promise<ApiResponse<RegisterResponse>> {
         const res = await this.authService.register(body);
 
-        return apiResponse("register succesful", res);
+        return apiResponse("register successful", res);
     }
 
     @Public()
@@ -26,6 +28,24 @@ export class AuthController {
     async login(@Body() body: LoginBody): Promise<ApiResponse<LoginResponse>> {
         const res = await this.authService.login(body);
 
-        return apiResponse("login succesful", res);
+        return apiResponse("login successful", res);
+    }
+
+    @Public()
+    @Post("/refresh")
+    @UsePipes(new ZodValidationPipe(refreshTokenBody))
+    async refresh(@Body() body: RefreshTokenBody): Promise<ApiResponse<RefreshTokenResponse>> {
+        const res = await this.authService.refresh(body);
+
+        return apiResponse("refresh token successful", res);
+    }
+
+    @Public()
+    @Post("/logout")
+    @UsePipes(new ZodValidationPipe(logoutBody))
+    async logout(@Body() body: LogoutBody): Promise<ApiResponse<LogoutResponse>> {
+        const res = await this.authService.logout(body);
+
+        return apiResponse("logout successful", res);
     }
 }

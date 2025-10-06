@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { ConfigType } from "@nestjs/config";
-import * as crypto from "crypto";
+import crypto from "crypto";
 import cryptoConfig from "src/config/crypto.config";
 
 @Injectable()
@@ -14,8 +14,8 @@ export class CryptoService {
         this.KEY = crypto.createHash("sha256").update(this.cryptoCfg.secret).digest();
     }
 
-    get client(): typeof crypto {
-        return crypto;
+    generateKey(length: number = 32): string {
+        return crypto.randomBytes(length).toString("hex");
     }
 
     hash(plainText: string): string {
