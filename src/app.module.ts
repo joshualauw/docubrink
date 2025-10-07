@@ -11,6 +11,7 @@ import { SourceModule } from "src/modules/source/source.module";
 import { WebhookModule } from "src/modules/webhook/webhook.module";
 import { ApiKeyModule } from "src/modules/apiKey/api-key.module";
 import { OrganizationUserModule } from "src/modules/organizationUser/organization-user.module";
+import { SubscriptionModule } from "src/modules/subscription/subscription.module";
 
 import commonConfig from "src/config/common.config";
 import cryptoConfig from "src/config/crypto.config";
@@ -43,6 +44,7 @@ import mailerConfig from "src/config/mailer.config";
         AuthModule,
         OrganizationModule,
         OrganizationUserModule,
+        SubscriptionModule,
         ApiKeyModule,
         SourceModule,
         WebhookModule,

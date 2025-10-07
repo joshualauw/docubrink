@@ -14,7 +14,6 @@ enum InvitationStatus {
 }
 
 enum SubscriptionStatus {
-  PENDING
   ACTIVE
   CANCELED
   EXPIRED
@@ -44,31 +43,32 @@ enum SourceStatus {
 }
 
 model Plan {
-  planId              Int    @id @default(autoincrement())
+  planId              Int     @id @default(autoincrement())
   price               Float
   name                String
-  apiCallLimit        Int
+  description         String
   maxSources          Int
   queryTokenLimit     Int
   embeddingTokenLimit Int
-  stripePriceId       String
+  stripePriceId       String?
 
   subscriptions Subscription[]
 }
 
 model Subscription {
-  subscriptionId       Int                @id @default(autoincrement())
+  subscriptionId       Int       @id @default(autoincrement())
   organizationId       Int
   planId               Int
-  status               SubscriptionStatus
+  isActive             Boolean   @default(true)
   startDate            DateTime
-  endDate              DateTime
+  endDate              DateTime?
   renewalDate          DateTime?
   canceledDate         DateTime?
   stripeCustomerId     String
-  stripeSubscriptionId String
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt()
+  stripeSubscriptionId String?
+  stripeStatus         String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt()
 
   plan         Plan         @relation(fields: [planId], references: [planId])
   organization Organization @relation(fields: [organizationId], references: [organizationId])

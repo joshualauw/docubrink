@@ -14,6 +14,9 @@ export class WebhookController {
     @UseGuards(StripeWebhookGuard)
     async handleStripeWebhook(@Body() body: Stripe.Event) {
         switch (body.type) {
+            case "checkout.session.completed":
+                await this.stripeWebhookService.handleCheckoutSessionCompleted(body.data.object);
+                break;
         }
 
         return apiResponse("stripe webhook handled");

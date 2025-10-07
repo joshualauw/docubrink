@@ -14,7 +14,7 @@ export class AuthController {
     constructor(private authService: AuthService) {}
 
     @Public()
-    @Post("/register")
+    @Post("register")
     @UsePipes(new ZodValidationPipe(registerBody))
     async register(@Body() body: RegisterBody): Promise<ApiResponse<RegisterResponse>> {
         const res = await this.authService.register(body);
@@ -23,7 +23,7 @@ export class AuthController {
     }
 
     @Public()
-    @Post("/login")
+    @Post("login")
     @UsePipes(new ZodValidationPipe(loginBody))
     async login(@Body() body: LoginBody): Promise<ApiResponse<LoginResponse>> {
         const res = await this.authService.login(body);
@@ -32,7 +32,7 @@ export class AuthController {
     }
 
     @Public()
-    @Post("/refresh")
+    @Post("refresh")
     @UsePipes(new ZodValidationPipe(refreshTokenBody))
     async refresh(@Body() body: RefreshTokenBody): Promise<ApiResponse<RefreshTokenResponse>> {
         const res = await this.authService.refresh(body);
@@ -41,7 +41,7 @@ export class AuthController {
     }
 
     @Public()
-    @Post("/logout")
+    @Post("logout")
     @UsePipes(new ZodValidationPipe(logoutBody))
     async logout(@Body() body: LogoutBody): Promise<ApiResponse<LogoutResponse>> {
         const res = await this.authService.logout(body);

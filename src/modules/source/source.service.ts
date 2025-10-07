@@ -65,7 +65,7 @@ export class SourceService {
         const organizationId = this.organizationContextService.get();
 
         const subscription = await this.prismaService.subscription.findFirstOrThrow({
-            where: { status: "ACTIVE", organizationId },
+            where: { isActive: true, organizationId },
             select: {
                 plan: { select: { maxSources: true, embeddingTokenLimit: true } },
             },
@@ -147,7 +147,7 @@ export class SourceService {
         const organizationId = this.organizationContextService.get();
 
         const subscription = await this.prismaService.subscription.findFirstOrThrow({
-            where: { status: "ACTIVE", organizationId },
+            where: { isActive: true, organizationId },
             select: {
                 plan: { select: { maxSources: true, queryTokenLimit: true } },
             },
