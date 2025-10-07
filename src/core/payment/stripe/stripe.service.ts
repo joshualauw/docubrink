@@ -2,7 +2,6 @@ import { Injectable, Inject } from "@nestjs/common";
 import { ConfigType } from "@nestjs/config";
 import stripeConfig from "src/config/stripe.config";
 import { CreateCustomerDto } from "src/core/payment/stripe/dtos/CreateCustomer";
-import { CreateSubscriptionDto } from "src/core/payment/stripe/dtos/CreateSubscription";
 import Stripe from "stripe";
 import commonConfig from "src/config/common.config";
 import { CreateCheckoutDto } from "src/core/payment/stripe/dtos/CreateCheckout";
@@ -25,7 +24,7 @@ export class StripeService {
         return this.stripe;
     }
 
-    async createCheckoutSession(payload: CreateCheckoutDto): Promise<Stripe.Checkout.Session> {
+    async createSubscriptionCheckoutSession(payload: CreateCheckoutDto): Promise<Stripe.Checkout.Session> {
         return this.stripe.checkout.sessions.create({
             payment_method_types: ["card"],
             mode: "subscription",
@@ -38,6 +37,7 @@ export class StripeService {
             success_url: `${this.commonCfg.frontendUrl}?payment_status=paid`,
             cancel_url: `${this.commonCfg.frontendUrl}?payment_status=cancel`,
             customer_email: payload.email,
+            customer: payload.customerId,
             metadata: payload.metadata as any,
         });
     }
@@ -49,15 +49,6 @@ export class StripeService {
             metadata: {
                 organizationId: payload.organizationId.toString(),
             },
-        });
-    }
-
-    async createSubscription(payload: CreateSubscriptionDto): Promise<Stripe.Subscription> {
-        return this.stripe.subscriptions.create({
-            customer: payload.customerId,
-            items: [{ price: payload.priceId }],
-            payment_behavior: "default_incomplete",
-            expand: ["latest_invoice.payment_intent"],
         });
     }
 

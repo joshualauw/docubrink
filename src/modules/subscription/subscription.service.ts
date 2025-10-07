@@ -31,8 +31,9 @@ export class SubscriptionService {
             where: { organizationId: organizationUser.organizationId },
         });
 
-        const checkout = await this.stripeService.createCheckoutSession({
+        const checkout = await this.stripeService.createSubscriptionCheckoutSession({
             priceId: plan.stripePriceId!,
+            customerId: organization.stripeCustomerId,
             email: organization.email,
             metadata: {
                 organizationId: organization.organizationId,

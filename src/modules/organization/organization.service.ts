@@ -41,49 +41,36 @@ export class OrganizationService {
 
         if (organizationCountByUser == 3) throw new BadRequestException("maximum organization created");
 
-        const basicPlan = await this.prismaService.plan.findFirstOrThrow({
+        const freePlan = await this.prismaService.plan.findFirstOrThrow({
             where: { name: "free" },
         });
 
-        const organization = await this.prismaService.$transaction(async (tx) => {
-            const organization = await tx.organization.create({
-                data: {
-                    name: payload.name,
-                    description: payload.name,
-                    email: payload.email,
-                    stripeCustomerId: "",
-                    organizationUser: {
-                        create: {
-                            userId: user.userId,
-                            role: "OWNER",
-                        },
+        const organization = await this.prismaService.organization.create({
+            data: {
+                name: payload.name,
+                description: payload.name,
+                email: payload.email,
+                stripeCustomerId: "",
+                organizationUser: {
+                    create: {
+                        userId: user.userId,
+                        role: "OWNER",
                     },
                 },
-            });
-
-            const customer = await this.stripeService.createCustomer({
-                organizationId: organization.organizationId,
-                organizationName: organization.name,
-                organizationEmail: payload.email,
-            });
-
-            await tx.organization.update({
-                where: { organizationId: organization.organizationId },
-                data: { stripeCustomerId: customer.id },
-            });
-
-            await tx.subscription.create({
-                data: {
-                    organizationId: organization.organizationId,
-                    planId: basicPlan.planId,
-                    isActive: true,
-                    startDate: dayjs().toDate(),
-                    stripeStatus: "active",
-                    stripeCustomerId: customer.id,
+                subscriptions: {
+                    create: {
+                        planId: freePlan.planId,
+                        isActive: true,
+                        startDate: dayjs().toDate(),
+                    },
                 },
-            });
+            },
+        });
 
-            return organization;
+        await this.stripeService.createCustomer({
+            organizationId: organization.organizationId,
+            organizationName: organization.name,
+            organizationEmail: payload.email,
         });
 
         return { organizationId: organization.organizationId, createdAt: organization.createdAt.toISOString() };

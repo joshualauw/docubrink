@@ -11,14 +11,22 @@ export class StripeWebhookService {
         private stripeService: StripeService,
     ) {}
 
-    async handleCheckoutSessionCompleted(payload: Stripe.Checkout.Session) {
+    async customerCreated(payload: Stripe.Customer): Promise<void> {
+        const organizationId = parseInt(payload.metadata.organizationId, 0);
+
+        await this.prismaService.organization.update({
+            where: { organizationId },
+            data: { stripeCustomerId: payload.id },
+        });
+    }
+
+    async checkoutSessionCompleted(payload: Stripe.Checkout.Session): Promise<void> {
         if (payload.mode !== "subscription" || !payload.subscription || !payload.metadata || !payload.customer) {
             return;
         }
 
         const organizationId = parseInt(payload.metadata.organizationId, 0);
         const planId = parseInt(payload.metadata.planId, 0);
-        const stripeCustomerId = payload.customer.toString();
         const stripeSubscriptionId = payload.subscription.toString();
 
         const stripeSubscription = await this.stripeService.retrieveSubscription({
@@ -41,7 +49,6 @@ export class StripeWebhookService {
                     endDate: endDate.toDate(),
                     renewalDate: endDate.toDate(),
                     stripeStatus: stripeSubscription.status,
-                    stripeCustomerId: stripeCustomerId,
                     stripeSubscriptionId: stripeSubscriptionId,
                 },
             });
