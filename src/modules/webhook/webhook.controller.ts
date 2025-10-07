@@ -14,11 +14,11 @@ export class WebhookController {
     @UseGuards(StripeWebhookGuard)
     async handleStripeWebhook(@Body() body: Stripe.Event) {
         switch (body.type) {
-            case "checkout.session.completed":
-                await this.stripeWebhookService.checkoutSessionCompleted(body.data.object);
-                break;
             case "customer.created":
                 await this.stripeWebhookService.customerCreated(body.data.object);
+                break;
+            case "checkout.session.completed":
+                await this.stripeWebhookService.checkoutSessionCompleted(body.data.object);
                 break;
         }
 

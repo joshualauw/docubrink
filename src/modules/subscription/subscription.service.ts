@@ -28,13 +28,12 @@ export class SubscriptionService {
         });
 
         const organization = await this.prismaService.organization.findFirstOrThrow({
-            where: { organizationId: organizationUser.organizationId },
+            where: { organizationId: organizationUser.organizationId, stripeCustomerId: { not: null } },
         });
 
         const checkout = await this.stripeService.createSubscriptionCheckoutSession({
             priceId: plan.stripePriceId!,
-            customerId: organization.stripeCustomerId,
-            email: organization.email,
+            customerId: organization.stripeCustomerId!,
             metadata: {
                 organizationId: organization.organizationId,
                 planId: plan.planId,

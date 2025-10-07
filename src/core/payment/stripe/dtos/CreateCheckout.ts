@@ -5,7 +5,6 @@ export interface CreateCheckoutMetadata {
 
 export interface CreateCheckoutDto {
     priceId: string;
-    email: string;
     customerId: string;
     metadata: CreateCheckoutMetadata;
 }

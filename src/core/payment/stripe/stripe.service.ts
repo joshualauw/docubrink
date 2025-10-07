@@ -36,7 +36,6 @@ export class StripeService {
             ],
             success_url: `${this.commonCfg.frontendUrl}?payment_status=paid`,
             cancel_url: `${this.commonCfg.frontendUrl}?payment_status=cancel`,
-            customer_email: payload.email,
             customer: payload.customerId,
             metadata: payload.metadata as any,
         });

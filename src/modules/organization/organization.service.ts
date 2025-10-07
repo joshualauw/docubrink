@@ -50,7 +50,6 @@ export class OrganizationService {
                 name: payload.name,
                 description: payload.name,
                 email: payload.email,
-                stripeCustomerId: "",
                 organizationUser: {
                     create: {
                         userId: user.userId,
