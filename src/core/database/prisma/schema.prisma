@@ -50,7 +50,7 @@ model Plan {
   maxSources          Int
   queryTokenLimit     Int
   embeddingTokenLimit Int
-  stripePriceId       String?
+  stripePriceId       String? @unique()
 
   subscriptions Subscription[]
 }
@@ -131,7 +131,7 @@ model Organization {
   name             String
   email            String
   description      String?
-  stripeCustomerId String?
+  stripeCustomerId String?  @unique()
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt()
 

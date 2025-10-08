@@ -11,23 +11,26 @@ export class StripeWebhookService {
         private stripeService: StripeService,
     ) {}
 
-    async customerCreated(payload: Stripe.Customer): Promise<void> {
-        const organizationId = parseInt(payload.metadata.organizationId, 0);
+    async customerCreated(payload: Stripe.CustomerCreatedEvent.Data): Promise<void> {
+        const data = payload.object;
+        const organizationId = parseInt(data.metadata.organizationId, 0);
 
         await this.prismaService.organization.update({
             where: { organizationId },
-            data: { stripeCustomerId: payload.id },
+            data: { stripeCustomerId: data.id },
         });
     }
 
-    async checkoutSessionCompleted(payload: Stripe.Checkout.Session): Promise<void> {
-        if (payload.mode !== "subscription" || !payload.subscription || !payload.metadata || !payload.customer) {
+    async checkoutSessionCompleted(payload: Stripe.CheckoutSessionCompletedEvent.Data): Promise<void> {
+        const data = payload.object;
+
+        if (data.mode !== "subscription" || !data.subscription || !data.metadata || !data.customer) {
             return;
         }
 
-        const organizationId = parseInt(payload.metadata.organizationId, 0);
-        const planId = parseInt(payload.metadata.planId, 0);
-        const stripeSubscriptionId = payload.subscription.toString();
+        const organizationId = parseInt(data.metadata.organizationId, 0);
+        const planId = parseInt(data.metadata.planId, 0);
+        const stripeSubscriptionId = data.subscription.toString();
 
         const stripeSubscription = await this.stripeService.retrieveSubscription({
             subscriptionId: stripeSubscriptionId,
@@ -52,6 +55,31 @@ export class StripeWebhookService {
                     stripeSubscriptionId: stripeSubscriptionId,
                 },
             });
+        });
+    }
+
+    async subscriptionUpdated(payload: Stripe.CustomerSubscriptionUpdatedEvent.Data): Promise<void> {
+        const data = payload.object;
+        const previousData = payload.previous_attributes;
+
+        if (!previousData || !previousData.items) {
+            return;
+        }
+
+        const priceId = data.items.data[0].price.id.toString();
+        const previousSubscriptionId = previousData.items.data[0].subscription.toString();
+
+        const plan = await this.prismaService.plan.findFirstOrThrow({
+            where: { stripePriceId: priceId },
+        });
+
+        await this.prismaService.subscription.updateMany({
+            where: { stripeSubscriptionId: previousSubscriptionId },
+            data: {
+                planId: plan.planId,
+                stripeStatus: data.status,
+                endDate: dayjs().add(1, "month").toDate(),
+            },
         });
     }
 }

@@ -15,10 +15,13 @@ export class WebhookController {
     async handleStripeWebhook(@Body() body: Stripe.Event) {
         switch (body.type) {
             case "customer.created":
-                await this.stripeWebhookService.customerCreated(body.data.object);
+                await this.stripeWebhookService.customerCreated(body.data);
                 break;
             case "checkout.session.completed":
-                await this.stripeWebhookService.checkoutSessionCompleted(body.data.object);
+                await this.stripeWebhookService.checkoutSessionCompleted(body.data);
+                break;
+            case "customer.subscription.updated":
+                await this.stripeWebhookService.subscriptionUpdated(body.data);
                 break;
         }
 
