@@ -16,6 +16,7 @@ import { AiUsageService } from "src/modules/source/services/ai-usage.service";
 import { LocalStorageService } from "src/core/storage/local/local-storage.service";
 import FileParserService from "src/modules/source/services/file-parser.service";
 import { EmbeddingJobDto } from "src/modules/source/dtos/EmbeddingJob";
+import { Plan } from "@prisma/client";
 
 @Injectable()
 export class SourceService {
@@ -64,18 +65,27 @@ export class SourceService {
     async create(payload: CreateSourceDto): Promise<CreateSourceResponse> {
         const organizationId = this.organizationContextService.get();
 
-        const subscription = await this.prismaService.subscription.findFirstOrThrow({
+        const subscription = await this.prismaService.subscription.findFirst({
             where: { isActive: true, organizationId },
             select: {
                 plan: { select: { maxSources: true, embeddingTokenLimit: true } },
             },
         });
 
+        let currentPlan: Pick<Plan, "maxSources" | "embeddingTokenLimit">;
+        if (subscription) {
+            currentPlan = subscription.plan;
+        } else {
+            currentPlan = await this.prismaService.plan.findFirstOrThrow({
+                where: { name: "free" },
+            });
+        }
+
         const sourcesCount = await this.prismaService.source.count({
             where: { organizationId },
         });
 
-        if (subscription.plan.maxSources <= sourcesCount) {
+        if (currentPlan.maxSources <= sourcesCount) {
             throw new BadRequestException("Maximum sources limit");
         }
 
@@ -83,7 +93,7 @@ export class SourceService {
             organizationId,
         });
 
-        if (subscription.plan.embeddingTokenLimit <= embeddingUsageThisMonth) {
+        if (currentPlan.embeddingTokenLimit <= embeddingUsageThisMonth) {
             throw new BadRequestException("Embedding token limit");
         }
 
@@ -146,16 +156,25 @@ export class SourceService {
     async ask(payload: AskSourceDto): Promise<AskSourceResponse> {
         const organizationId = this.organizationContextService.get();
 
-        const subscription = await this.prismaService.subscription.findFirstOrThrow({
+        const subscription = await this.prismaService.subscription.findFirst({
             where: { isActive: true, organizationId },
             select: {
-                plan: { select: { maxSources: true, queryTokenLimit: true } },
+                plan: { select: { queryTokenLimit: true } },
             },
         });
 
+        let currentPlan: Pick<Plan, "queryTokenLimit">;
+        if (subscription) {
+            currentPlan = subscription.plan;
+        } else {
+            currentPlan = await this.prismaService.plan.findFirstOrThrow({
+                where: { name: "free" },
+            });
+        }
+
         const queryUsageThisMonth = await this.aiUsageService.getAiQueryMonthlyUsage({ organizationId });
 
-        if (subscription.plan.queryTokenLimit <= queryUsageThisMonth) {
+        if (currentPlan.queryTokenLimit <= queryUsageThisMonth) {
             throw new BadRequestException("Query token limit");
         }
 

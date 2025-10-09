@@ -16,7 +16,10 @@ export class SubscriptionService {
         const organizationUser = this.organizationUserContextService.get();
 
         const subscription = await this.prismaService.subscription.findFirst({
-            where: { organizationId: organizationUser.organizationId, planId: payload.planId, isActive: true },
+            where: {
+                organizationId: organizationUser.organizationId,
+                isActive: true,
+            },
         });
 
         if (subscription) {

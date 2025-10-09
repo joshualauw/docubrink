@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "nestjs-prisma";
 import { StripeService } from "src/core/payment/stripe/stripe.service";
@@ -41,10 +40,6 @@ export class OrganizationService {
 
         if (organizationCountByUser == 3) throw new BadRequestException("maximum organization created");
 
-        const freePlan = await this.prismaService.plan.findFirstOrThrow({
-            where: { name: "free" },
-        });
-
         const organization = await this.prismaService.organization.create({
             data: {
                 name: payload.name,
@@ -54,13 +49,6 @@ export class OrganizationService {
                     create: {
                         userId: user.userId,
                         role: "OWNER",
-                    },
-                },
-                subscriptions: {
-                    create: {
-                        planId: freePlan.planId,
-                        isActive: true,
-                        startDate: dayjs().toDate(),
                     },
                 },
             },
