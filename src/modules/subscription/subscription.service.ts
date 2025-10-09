@@ -27,7 +27,7 @@ export class SubscriptionService {
         }
 
         const plan = await this.prismaService.plan.findFirstOrThrow({
-            where: { planId: payload.planId, stripePriceId: { not: null } },
+            where: { planId: payload.planId, name: { not: "free" } },
         });
 
         const organization = await this.prismaService.organization.findFirstOrThrow({

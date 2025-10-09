@@ -23,6 +23,9 @@ export class WebhookController {
             case "customer.subscription.updated":
                 await this.stripeWebhookService.subscriptionUpdated(body.data);
                 break;
+            case "customer.subscription.deleted":
+                await this.stripeWebhookService.subscriptionDeleted(body.data);
+                break;
         }
 
         return apiResponse("stripe webhook handled");
