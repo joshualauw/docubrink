@@ -18,6 +18,7 @@ async function planSeeder() {
                 embeddingTokenLimit: 1000,
                 maxSources: 25,
                 price: 0,
+                stripePriceId: "price_1SHcdFQadB7ZZTKOOwRCwEGI",
             },
             {
                 name: "basic",

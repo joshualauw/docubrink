@@ -1,5 +1,7 @@
 export interface GetAiMonthlyUsageDto {
     organizationId: number;
+    startDate: Date;
+    endDate: Date;
 }
 
 export type GetAiMonthlyUsageResponse = number;

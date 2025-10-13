@@ -19,7 +19,7 @@ export class RetrievalService {
         const vector = vectors.embeddings[0];
         const vectorString = `[${vector.join(",")}]`;
 
-        return await this.prismaService.$queryRaw`
+        return this.prismaService.$queryRaw`
             SELECT "sourceChunkId", "chunkText", embedding <=> ${vectorString}::vector AS score 
             FROM public."SourceChunk"
             WHERE "sourceId" = ANY(${sourceIds}::int[]) 

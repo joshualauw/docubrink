@@ -3,6 +3,7 @@ import { StripeService } from "src/core/payment/stripe/stripe.service";
 import { PrismaService } from "nestjs-prisma";
 import Stripe from "stripe";
 import dayjs from "dayjs";
+import { Subscription } from "@prisma/client";
 
 @Injectable()
 export class StripeWebhookService {
@@ -22,37 +23,38 @@ export class StripeWebhookService {
             where: { organizationId },
             data: { stripeCustomerId: data.id },
         });
+
+        await this.resetFreePlan(data.id);
     }
 
-    async checkoutSessionCompleted(payload: Stripe.CheckoutSessionCompletedEvent.Data): Promise<void> {
+    async subscriptionCreated(payload: Stripe.CustomerSubscriptionCreatedEvent.Data): Promise<void> {
         const data = payload.object;
+        const itemData = data.items.data[0];
+        const customerId = data.customer.toString();
 
-        if (data.mode !== "subscription" || !data.subscription || !data.customer) return;
-        if (!data.metadata || !data.metadata.organizationId || !data.metadata.planId) return;
-
-        const organizationId = parseInt(data.metadata.organizationId);
-        const planId = parseInt(data.metadata.planId);
-        const stripeSubscriptionId = data.subscription.toString();
-
-        const stripeSubscription = await this.stripeService.retrieveSubscription({
-            subscriptionId: stripeSubscriptionId,
+        const organization = await this.prismaService.organization.findFirstOrThrow({
+            where: { stripeCustomerId: customerId },
         });
-        const itemData = stripeSubscription.items.data[0];
 
-        const startDate = dayjs(itemData.current_period_start * 1000).toDate();
+        const freePlan = await this.prismaService.plan.findFirstOrThrow({
+            where: { name: "free" },
+        });
+
         const endDate = dayjs(itemData.current_period_end * 1000).toDate();
 
         await this.prismaService.subscription.create({
             data: {
-                organizationId: organizationId,
-                planId: planId,
-                startDate,
+                organizationId: organization.organizationId,
+                planId: freePlan.planId,
+                startDate: dayjs(itemData.current_period_start * 1000).toDate(),
                 endDate,
                 renewalDate: endDate,
-                stripeStatus: stripeSubscription.status,
-                stripeSubscriptionId: stripeSubscriptionId,
+                stripeSubscriptionId: data.id,
+                stripeStatus: data.status,
             },
         });
+
+        await this.resetOrganizationAiUsage(organization.organizationId);
     }
 
     async subscriptionUpdated(payload: Stripe.CustomerSubscriptionUpdatedEvent.Data): Promise<void> {
@@ -87,11 +89,13 @@ export class StripeWebhookService {
             where: { stripePriceId: priceId },
         });
 
+        let subscription: Subscription;
+
         switch (data.status) {
             // invoice payment succeed
             case "active":
                 const endDate = dayjs(itemData.current_period_end * 1000).toDate();
-                await this.prismaService.subscription.update({
+                subscription = await this.prismaService.subscription.update({
                     where: { stripeSubscriptionId: subscriptionId },
                     data: {
                         planId: plan.planId,
@@ -101,6 +105,7 @@ export class StripeWebhookService {
                         renewalDate: endDate,
                     },
                 });
+                await this.resetOrganizationAiUsage(subscription.organizationId);
                 break;
             // invoice payment failed (grace period)
             case "incomplete":
@@ -117,6 +122,7 @@ export class StripeWebhookService {
                     where: { stripeSubscriptionId: subscriptionId },
                     data: { stripeStatus: data.status, isActive: false },
                 });
+                await this.resetFreePlan(data.customer.toString());
                 break;
         }
     }
@@ -129,6 +135,25 @@ export class StripeWebhookService {
         await this.prismaService.subscription.update({
             where: { stripeSubscriptionId: subscriptionId },
             data: { stripeStatus: data.status, isActive: false },
+        });
+        await this.resetFreePlan(data.customer.toString());
+    }
+
+    private async resetFreePlan(customerId: string): Promise<void> {
+        const freePlan = await this.prismaService.plan.findFirstOrThrow({
+            where: { name: "free" },
+        });
+
+        await this.stripeService.createSubscription({
+            customerId,
+            priceId: freePlan.stripePriceId!,
+        });
+    }
+
+    private async resetOrganizationAiUsage(organizationId: number): Promise<void> {
+        await this.prismaService.organization.update({
+            where: { organizationId },
+            data: { aiEmbeddingUsage: 0, aiQueryUsage: 0 },
         });
     }
 }

@@ -17,8 +17,8 @@ export class WebhookController {
             case "customer.created":
                 await this.stripeWebhookService.customerCreated(body.data);
                 break;
-            case "checkout.session.completed":
-                await this.stripeWebhookService.checkoutSessionCompleted(body.data);
+            case "customer.subscription.created":
+                await this.stripeWebhookService.subscriptionCreated(body.data);
                 break;
             case "customer.subscription.updated":
                 await this.stripeWebhookService.subscriptionUpdated(body.data);

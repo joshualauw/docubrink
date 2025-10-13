@@ -4,8 +4,7 @@ import stripeConfig from "src/config/stripe.config";
 import { CreateCustomerDto } from "src/core/payment/stripe/dtos/CreateCustomer";
 import Stripe from "stripe";
 import commonConfig from "src/config/common.config";
-import { CreateCheckoutDto } from "src/core/payment/stripe/dtos/CreateCheckout";
-import { RetrieveSubscriptionDto } from "src/core/payment/stripe/dtos/RetrieveSubscription";
+import { CreateSubscriptionDto } from "src/core/payment/stripe/dtos/CreateSubscription";
 
 @Injectable()
 export class StripeService {
@@ -24,23 +23,6 @@ export class StripeService {
         return this.stripe;
     }
 
-    async createSubscriptionCheckoutSession(payload: CreateCheckoutDto): Promise<Stripe.Checkout.Session> {
-        return this.stripe.checkout.sessions.create({
-            payment_method_types: ["card"],
-            mode: "subscription",
-            line_items: [
-                {
-                    price: payload.priceId,
-                    quantity: 1,
-                },
-            ],
-            success_url: `${this.commonCfg.frontendUrl}?payment_status=paid`,
-            cancel_url: `${this.commonCfg.frontendUrl}?payment_status=cancel`,
-            customer: payload.customerId,
-            metadata: payload.metadata as any,
-        });
-    }
-
     async createCustomer(payload: CreateCustomerDto): Promise<Stripe.Customer> {
         return this.stripe.customers.create({
             name: payload.organizationName,
@@ -51,7 +33,11 @@ export class StripeService {
         });
     }
 
-    async retrieveSubscription(payload: RetrieveSubscriptionDto): Promise<Stripe.Subscription> {
-        return this.stripe.subscriptions.retrieve(payload.subscriptionId);
+    async createSubscription(payload: CreateSubscriptionDto): Promise<Stripe.Subscription> {
+        return this.stripe.subscriptions.create({
+            customer: payload.customerId,
+            items: [{ price: payload.priceId }],
+            collection_method: "charge_automatically",
+        });
     }
 }

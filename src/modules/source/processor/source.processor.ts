@@ -3,7 +3,6 @@ import { Logger } from "@nestjs/common";
 import { Job } from "bullmq";
 import { PrismaService } from "nestjs-prisma";
 import { EmbeddingJobDto } from "src/modules/source/dtos/EmbeddingJob";
-import { AiUsageService } from "src/modules/source/services/ai-usage.service";
 import { ChunkingService } from "src/modules/source/services/chunking.service";
 import { QueueKey } from "src/types/QueueKey";
 
@@ -14,7 +13,6 @@ export class SourceProcessor extends WorkerHost {
     constructor(
         private prismaService: PrismaService,
         private chunkingService: ChunkingService,
-        private aiUsageService: AiUsageService,
     ) {
         super();
     }
@@ -49,7 +47,9 @@ export class SourceProcessor extends WorkerHost {
                     where: { sourceId: job.data.sourceId },
                     data: { status: "DONE" },
                 });
+            });
 
+            await this.prismaService.$transaction(async (tx) => {
                 await tx.aiEmbedding.create({
                     data: {
                         sourceId: job.data.sourceId,
@@ -57,13 +57,13 @@ export class SourceProcessor extends WorkerHost {
                         tokensUsed: result.tokenCost,
                     },
                 });
-            });
 
-            const totalTokenCost = job.data.embeddingUsageThisMonth + result.tokenCost;
-
-            await this.aiUsageService.updateAiEmbeddingMonthlyUsage({
-                organizationId: source.organizationId,
-                totalTokenCost,
+                await tx.organization.update({
+                    where: { organizationId: source.organizationId },
+                    data: {
+                        aiEmbeddingUsage: { increment: result.tokenCost },
+                    },
+                });
             });
         } catch (e: any) {
             this.logger.error(`job ${job.id} failed`, e.message);
