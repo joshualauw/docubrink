@@ -40,13 +40,14 @@ export class StripeWebhookService {
             where: { name: "free" },
         });
 
+        const startDate = dayjs(itemData.current_period_start * 1000).toDate();
         const endDate = dayjs(itemData.current_period_end * 1000).toDate();
 
         await this.prismaService.subscription.create({
             data: {
                 organizationId: organization.organizationId,
                 planId: freePlan.planId,
-                startDate: dayjs(itemData.current_period_start * 1000).toDate(),
+                startDate,
                 endDate,
                 renewalDate: endDate,
                 stripeSubscriptionId: data.id,
