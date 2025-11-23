@@ -7,7 +7,9 @@ import { TokenService } from "src/modules/auth/services/token.service";
 import { pick } from "src/utils/common";
 import dayjs from "dayjs";
 import { RefreshTokenDto, RefreshTokenResponse } from "src/modules/auth/dtos/RefreshToken";
-import { LogoutDto, LogoutResponse } from "src/modules/auth/dtos/Logout";
+import { LogoutResponse } from "src/modules/auth/dtos/Logout";
+import { UserContextService } from "src/modules/auth/services/user-context.service";
+import { GetMeResponse } from "src/modules/auth/dtos/GetMe";
 
 @Injectable()
 export class AuthService {
@@ -15,7 +17,18 @@ export class AuthService {
         private prismaService: PrismaService,
         private bcryptService: BcryptService,
         private tokenService: TokenService,
+        private userContextService: UserContextService,
     ) {}
+
+    async getMe(): Promise<GetMeResponse> {
+        const user = this.userContextService.get();
+
+        const currentUser = await this.prismaService.user.findFirstOrThrow({
+            where: { userId: user.userId },
+        });
+
+        return pick(currentUser, "userId", "username", "email", "profileUrl");
+    }
 
     async register(payload: RegisterDto): Promise<RegisterResponse> {
         const user = await this.prismaService.user.create({
@@ -42,27 +55,33 @@ export class AuthService {
             throw new UnauthorizedException("invalid credentials");
         }
 
-        const existingToken = await this.prismaService.refreshToken.findFirst({
-            where: { userId: user.userId },
-        });
-
-        if (existingToken) {
-            throw new UnauthorizedException("User already logged in");
-        }
-
         const token = this.tokenService.generateToken({
             userId: user.userId,
             username: user.username,
             email: user.email,
         });
 
-        await this.prismaService.refreshToken.create({
-            data: {
-                userId: user.userId,
-                token: token.refreshToken,
-                expiresAt: dayjs().add(1, "month").toDate(),
-            },
+        const existingToken = await this.prismaService.refreshToken.findFirst({
+            where: { userId: user.userId },
         });
+
+        if (!existingToken) {
+            await this.prismaService.refreshToken.create({
+                data: {
+                    userId: user.userId,
+                    token: token.refreshToken,
+                    expiresAt: dayjs().add(1, "month").toDate(),
+                },
+            });
+        } else {
+            await this.prismaService.refreshToken.update({
+                where: { refreshTokenId: existingToken.refreshTokenId },
+                data: {
+                    token: token.refreshToken,
+                    expiresAt: dayjs().add(1, "month").toDate(),
+                },
+            });
+        }
 
         return { user: pick(user, "userId", "username", "email", "profileUrl"), token };
     }
@@ -100,9 +119,15 @@ export class AuthService {
         return token;
     }
 
-    async logout(payload: LogoutDto): Promise<LogoutResponse> {
-        const refreshToken = await this.prismaService.refreshToken.delete({
-            where: { token: payload.refreshToken },
+    async logout(): Promise<LogoutResponse> {
+        const user = this.userContextService.get();
+
+        const refreshToken = await this.prismaService.refreshToken.findFirstOrThrow({
+            where: { userId: user.userId },
+        });
+
+        await this.prismaService.refreshToken.delete({
+            where: { refreshTokenId: refreshToken.refreshTokenId },
         });
 
         return { refreshTokenId: refreshToken.refreshTokenId, timestamp: dayjs().toISOString() };

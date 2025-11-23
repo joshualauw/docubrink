@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UsePipes } from "@nestjs/common";
+import { Body, Controller, Get, Post, UsePipes } from "@nestjs/common";
 import { ZodValidationPipe } from "src/common/pipes/zod-validation.pipe";
 import { AuthService } from "src/modules/auth/auth.service";
 import { Public } from "src/modules/auth/decorators/public.decorator";
@@ -7,7 +7,8 @@ import { RegisterBody, registerBody, RegisterResponse } from "src/modules/auth/d
 import { ApiResponse } from "src/types/ApiResponse";
 import { apiResponse } from "src/utils/api";
 import { RefreshTokenBody, refreshTokenBody, RefreshTokenResponse } from "src/modules/auth/dtos/RefreshToken";
-import { LogoutBody, logoutBody, LogoutResponse } from "src/modules/auth/dtos/Logout";
+import { LogoutResponse } from "src/modules/auth/dtos/Logout";
+import { GetMeResponse } from "src/modules/auth/dtos/GetMe";
 
 @Controller("/api/auth")
 export class AuthController {
@@ -40,11 +41,16 @@ export class AuthController {
         return apiResponse("refresh token successful", res);
     }
 
-    @Public()
+    @Get("me")
+    async getMe(): Promise<ApiResponse<GetMeResponse>> {
+        const res = await this.authService.getMe();
+
+        return apiResponse("get me successful", res);
+    }
+
     @Post("logout")
-    @UsePipes(new ZodValidationPipe(logoutBody))
-    async logout(@Body() body: LogoutBody): Promise<ApiResponse<LogoutResponse>> {
-        const res = await this.authService.logout(body);
+    async logout(): Promise<ApiResponse<LogoutResponse>> {
+        const res = await this.authService.logout();
 
         return apiResponse("logout successful", res);
     }
