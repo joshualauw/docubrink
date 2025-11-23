@@ -40,24 +40,28 @@ export class OrganizationService {
 
         if (organizationCountByUser == 3) throw new BadRequestException("maximum organization created");
 
-        const organization = await this.prismaService.organization.create({
-            data: {
-                name: payload.name,
-                description: payload.name,
-                email: payload.email,
-                organizationUser: {
-                    create: {
-                        userId: user.userId,
-                        role: "OWNER",
+        const organization = await this.prismaService.$transaction(async (tx) => {
+            const organization = await tx.organization.create({
+                data: {
+                    name: payload.name,
+                    description: payload.name,
+                    email: payload.email,
+                    organizationUser: {
+                        create: {
+                            userId: user.userId,
+                            role: "OWNER",
+                        },
                     },
                 },
-            },
-        });
+            });
 
-        await this.stripeService.createCustomer({
-            organizationId: organization.organizationId,
-            organizationName: organization.name,
-            organizationEmail: payload.email,
+            await this.stripeService.createCustomer({
+                organizationId: organization.organizationId,
+                organizationName: organization.name,
+                organizationEmail: payload.email,
+            });
+
+            return organization;
         });
 
         return { organizationId: organization.organizationId, createdAt: organization.createdAt.toISOString() };
