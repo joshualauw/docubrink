@@ -4,6 +4,11 @@ import { StripeService } from "src/core/payment/stripe/stripe.service";
 import { CreateOrganizationDto, CreateOrganizationResponse } from "src/modules/organization/dtos/CreateOrganization";
 import { GetAllOrganizationResponse } from "src/modules/organization/dtos/GetAllOrganization";
 import { UserContextService } from "src/modules/auth/services/user-context.service";
+import {
+    GetOrganizationDetailDto,
+    GetOrganizationDetailResponse,
+} from "src/modules/organization/dtos/GetOrganizationDetail";
+import { pick } from "src/utils/common";
 
 @Injectable()
 export class OrganizationService {
@@ -26,6 +31,17 @@ export class OrganizationService {
             name: o.organization.name,
             role: o.role,
         }));
+    }
+
+    async getDetail(payload: GetOrganizationDetailDto): Promise<GetOrganizationDetailResponse> {
+        const user = this.userContextService.get();
+
+        const organization = await this.prismaService.organizationUser.findFirstOrThrow({
+            where: { userId: user.userId, organizationId: payload.organizationId },
+            include: { organization: true },
+        });
+
+        return { ...pick(organization, "organizationId", "role"), name: organization.organization.name };
     }
 
     async create(payload: CreateOrganizationDto): Promise<CreateOrganizationResponse> {

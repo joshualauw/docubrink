@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UsePipes } from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseIntPipe, Post, UsePipes } from "@nestjs/common";
 import { ZodValidationPipe } from "src/common/pipes/zod-validation.pipe";
 import {
     CreateOrganizationBody,
@@ -6,6 +6,7 @@ import {
     CreateOrganizationResponse,
 } from "src/modules/organization/dtos/CreateOrganization";
 import { GetAllOrganizationResponse } from "src/modules/organization/dtos/GetAllOrganization";
+import { GetOrganizationDetailResponse } from "src/modules/organization/dtos/GetOrganizationDetail";
 import { OrganizationService } from "src/modules/organization/organization.service";
 import { ApiResponse } from "src/types/ApiResponse";
 import { apiResponse } from "src/utils/api";
@@ -19,6 +20,15 @@ export class OrganizationController {
         const res = await this.organizationService.getAll();
 
         return apiResponse("get all organization successful", res);
+    }
+
+    @Get(":organizationId")
+    async getDetail(
+        @Param("organizationId", ParseIntPipe) organizationId: number,
+    ): Promise<ApiResponse<GetOrganizationDetailResponse>> {
+        const res = await this.organizationService.getDetail({ organizationId });
+
+        return apiResponse("get detail organization successful", res);
     }
 
     @Post()
