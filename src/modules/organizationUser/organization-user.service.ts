@@ -19,6 +19,7 @@ import {
     RemoveOrganizationUserResponse,
 } from "src/modules/organizationUser/dtos/RemoveOrganizationUser";
 import { GetAllOrganizationUserResponse } from "src/modules/organizationUser/dtos/GetAllOrganizationUser";
+import { GetAllOrganizationInviteResponse } from "src/modules/organizationUser/dtos/GetAllOrganizationInvite";
 
 @Injectable()
 export class OrganizationUserService {
@@ -34,14 +35,45 @@ export class OrganizationUserService {
 
         const organizationUsers = await this.prismaService.organizationUser.findMany({
             where: { organizationId: organizationUser.organizationId },
-            select: { organizationUserId: true, role: true, createdAt: true, user: { select: { username: true } } },
+            select: {
+                organizationUserId: true,
+                role: true,
+                createdAt: true,
+                user: { select: { username: true, email: true } },
+            },
         });
 
         return organizationUsers.map((o) => ({
             organizationUserId: o.organizationUserId,
             role: o.role,
             username: o.user.username,
+            email: o.user.email,
             joinedAt: o.createdAt.toISOString(),
+        }));
+    }
+
+    async getAllInvited(): Promise<GetAllOrganizationInviteResponse> {
+        const organizationUser = this.organizationUserContextService.get();
+
+        const invitations = await this.prismaService.organizationInvite.findMany({
+            where: { organizationId: organizationUser.organizationId },
+            select: {
+                organizationInviteId: true,
+                email: true,
+                role: true,
+                status: true,
+                createdAt: true,
+                expiredDate: true,
+            },
+        });
+
+        return invitations.map((i) => ({
+            organizationInviteId: i.organizationInviteId,
+            email: i.email,
+            role: i.role,
+            status: i.status,
+            createdAt: i.createdAt.toISOString(),
+            expiredDate: i.expiredDate.toISOString(),
         }));
     }
 

@@ -22,6 +22,7 @@ import {
 } from "./dtos/UpdateOrganizationUser";
 import { RemoveOrganizationUserResponse } from "src/modules/organizationUser/dtos/RemoveOrganizationUser";
 import { GetAllOrganizationUserResponse } from "src/modules/organizationUser/dtos/GetAllOrganizationUser";
+import { GetAllOrganizationInviteResponse } from "src/modules/organizationUser/dtos/GetAllOrganizationInvite";
 
 @Controller("/api/:organizationId/organization-user")
 export class OrganizationUserController {
@@ -34,6 +35,15 @@ export class OrganizationUserController {
         const res = await this.organizationUserService.getAll();
 
         return apiResponse("get all organization user successful", res);
+    }
+
+    @Get("invited")
+    @OrganizationRoles("ADMIN")
+    @UseGuards(OrganizationRolesGuard)
+    async getAllInvited(): Promise<ApiResponse<GetAllOrganizationInviteResponse>> {
+        const res = await this.organizationUserService.getAllInvited();
+
+        return apiResponse("get all invited user successful", res);
     }
 
     @Post("invite")
