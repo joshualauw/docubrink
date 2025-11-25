@@ -139,11 +139,9 @@ export class OrganizationUserService {
     async accept(payload: AcceptOrganizationInviteDto): Promise<AcceptOrganizationInviteResponse> {
         const user = this.userContextService.get();
 
-        const organizationInvite = await this.prismaService.organizationInvite.findFirst({
-            where: { email: user.email, code: payload.code, expiredDate: { gt: dayjs().toDate() } },
+        const organizationInvite = await this.prismaService.organizationInvite.findFirstOrThrow({
+            where: { email: user.email, code: payload.code, status: "INVITED", expiredDate: { gt: dayjs().toDate() } },
         });
-
-        if (!organizationInvite) throw new ForbiddenException("Invitation not found");
 
         await this.prismaService.organizationInvite.update({
             where: { organizationInviteId: organizationInvite.organizationInviteId },
@@ -177,6 +175,10 @@ export class OrganizationUserService {
             where: { organizationUserId: payload.organizationUserId, organizationId: organizationUser.organizationId },
         });
 
+        if (targetOrganizationUser.role == "OWNER") {
+            throw new ForbiddenException("Cannot change owner role");
+        }
+
         if (targetOrganizationUser.organizationUserId == organizationUser.organizationUserId) {
             throw new ForbiddenException("Cannot change self role");
         }
@@ -203,12 +205,16 @@ export class OrganizationUserService {
             where: { organizationUserId: payload.organizationUserId, organizationId: organizationUser.organizationId },
         });
 
+        if (targetOrganizationUser.role == "OWNER") {
+            throw new ForbiddenException("Cannot remove owner");
+        }
+
         if (targetOrganizationUser.organizationUserId == organizationUser.organizationUserId) {
             throw new ForbiddenException("Cannot remove self");
         }
 
-        if (targetOrganizationUser.role != "MEMBER" && organizationUser.role != "OWNER") {
-            throw new ForbiddenException("Can only remove member role");
+        if (targetOrganizationUser.role == "ADMIN" && organizationUser.role != "OWNER") {
+            throw new ForbiddenException("Cannot remove other admin");
         }
 
         targetOrganizationUser = await this.prismaService.organizationUser.delete({

@@ -41,7 +41,11 @@ export class OrganizationService {
             include: { organization: true },
         });
 
-        return { ...pick(organization, "organizationId", "role"), name: organization.organization.name };
+        return {
+            ...pick(organization, "organizationId", "role"),
+            organizationUserId: organization.organizationUserId,
+            name: organization.organization.name,
+        };
     }
 
     async create(payload: CreateOrganizationDto): Promise<CreateOrganizationResponse> {
